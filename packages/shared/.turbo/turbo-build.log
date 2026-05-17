@@ -1,0 +1,4 @@
+
+> @repo/shared@0.0.1 build C:\Users\adria\Desktop\Coding\pokemon-tcg\packages\shared
+> tsc -p tsconfig.json
+

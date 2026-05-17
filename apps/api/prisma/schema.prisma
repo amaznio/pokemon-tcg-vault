@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Card {
+  id         String   @id
+  name       String
+  supertype  String?
+  subtypes   String[]
+  hp         String?
+  types      String[]
+  setId      String
+  setName    String
+  rarity     String?
+  imageSmall String?
+  imageLarge String?
+  raw        Json
+  fetchedAt  DateTime
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Set {
+  id           String   @id
+  name         String
+  series       String?
+  releaseDate  String?
+  total        Int?
+  printedTotal Int?
+  logo         String?
+  symbol       String?
+  raw          Json
+  fetchedAt    DateTime
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model CardSearchCache {
+  id         String   @id @default(cuid())
+  queryHash  String   @unique
+  query      String
+  page       Int
+  pageSize   Int
+  orderBy    String?
+  cardIds    String[]
+  count      Int
+  totalCount Int
+  fetchedAt  DateTime
+  expiresAt  DateTime
+  updatedAt  DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
+model SetSearchCache {
+  id         String   @id @default(cuid())
+  queryHash  String   @unique
+  query      String
+  page       Int
+  pageSize   Int
+  setIds     String[]
+  count      Int
+  totalCount Int
+  fetchedAt  DateTime
+  expiresAt  DateTime
+  updatedAt  DateTime @updatedAt
+
+  @@index([expiresAt])
+}

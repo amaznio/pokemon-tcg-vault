@@ -1,0 +1,36 @@
+
+> @repo/web@0.0.1 build C:\Users\adria\Desktop\Coding\pokemon-tcg\apps\web
+> next build
+
+   ▲ Next.js 15.1.6
+   - Experiments (use with caution):
+     · typedRoutes
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/6) ...
+   Generating static pages (1/6) 
+   Generating static pages (2/6) 
+   Generating static pages (4/6) 
+ ✓ Generating static pages (6/6)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    1.1 kB          119 kB
+├ ○ /_not-found                          980 B           106 kB
+├ ƒ /cards/[id]                          1.56 kB         116 kB
+├ ○ /collection                          1.19 kB         107 kB
+├ ○ /sets                                1.02 kB         119 kB
+└ ƒ /sets/[id]                           823 B           115 kB
++ First Load JS shared by all            105 kB
+  ├ chunks/0f77e470-3c8cfaf8b733b022.js  52.9 kB
+  ├ chunks/659-7553835f3b12c9d4.js       50.5 kB
+  └ other shared chunks (total)          1.98 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
