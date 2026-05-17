@@ -2,9 +2,9 @@ import type { CardDetail, CardSummary, PaginatedResponse, SetSummary } from '@re
 import { apiFetch } from '@/lib/api';
 
 export const pokemonApi = {
-  cards: (query: string, page: number, pageSize = 20) =>
+  cards: (query: string, page: number, pageSize = 20, orderBy?: string) =>
     apiFetch<PaginatedResponse<CardSummary>>(
-      `/api/cards?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}`,
+      `/api/cards?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}${orderBy ? `&orderBy=${encodeURIComponent(orderBy)}` : ''}`,
     ),
   card: (id: string) => apiFetch<{ data: CardDetail; stale?: boolean }>(`/api/cards/${id}`),
   sets: (query: string, page: number, pageSize = 20, orderBy?: string) =>

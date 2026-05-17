@@ -17,7 +17,7 @@ export function Select({
   className?: string;
 }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} className={cn('h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none', className)}>
+    <select value={value} onChange={(e) => onChange(e.target.value)} className={cn('h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/40', className)}>
       <option value="">{placeholder}</option>
       {options.map((option) => {
         const resolved = typeof option === 'string' ? { value: option, label: option } : option;
