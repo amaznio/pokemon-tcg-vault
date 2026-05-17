@@ -1,48 +1,34 @@
 'use client';
-
 import Link from 'next/link';
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import type { CardSummary, PaginatedResponse } from '@repo/shared';
-import { queryKeys } from '@repo/shared';
-import { apiFetch } from '@/lib/api';
+import type { Route } from 'next';
+import { Search } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
-export default function CardsPage() {
-  const [query, setQuery] = useState('');
-  const [page, setPage] = useState(1);
+const quickLinks: { href: Route; label: string }[] = [
+  { href: '/cards', label: 'Browse cards' },
+  { href: '/sets', label: 'Browse sets' },
+  { href: '/favorites', label: 'Favorites' },
+  { href: '/collection', label: 'Collection' },
+  { href: '/wishlist', label: 'Wishlist' },
+];
 
-  const cardsQuery = useQuery({
-    queryKey: queryKeys.cards.list(query, page, 20),
-    queryFn: () =>
-      apiFetch<PaginatedResponse<CardSummary>>(
-        `/api/cards?query=${encodeURIComponent(query)}&page=${page}&pageSize=20`,
-      ),
-  });
-
+export default function DashboardPage() {
   return (
-    <section>
-      <h1>Cards</h1>
-      <div className="row" style={{ marginBottom: 16 }}>
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search cards" />
-        <button className="secondary" onClick={() => setPage(1)}>Search</button>
+    <div className="space-y-6">
+      <Card className="rounded-2xl">
+        <CardHeader><CardTitle className="text-2xl">Build your personal Pokemon card vault</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2"><Input placeholder="Search cards" /><Link href={'/cards'}><Button><Search className="h-4 w-4" />Go to search</Button></Link></div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">{quickLinks.map((link) => <Link key={link.href} href={link.href} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50">{link.label}</Link>)}</div>
+        </CardContent>
+      </Card>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card><CardHeader><CardTitle className="text-base">Recently viewed</CardTitle></CardHeader><CardContent className="text-sm text-slate-600">Open card details to build your history.</CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-base">Favorite cards</CardTitle></CardHeader><CardContent className="text-sm text-slate-600">Your favorites will appear here.</CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-base">Wishlist highlights</CardTitle></CardHeader><CardContent className="text-sm text-slate-600">Track wanted cards for trades and buys.</CardContent></Card>
       </div>
-      {cardsQuery.isLoading ? <p>Loading...</p> : null}
-      {cardsQuery.data?.stale ? <p>Showing stale cache while upstream is unavailable.</p> : null}
-      <div className="card-grid">
-        {cardsQuery.data?.data.map((card) => (
-          <article key={card.id} className="panel">
-            {card.imageSmall ? <img src={card.imageSmall} alt={card.name} width={180} height={250} /> : null}
-            <h3>{card.name}</h3>
-            <p>{card.setName}</p>
-            <Link href={`/cards/${card.id}`}>View</Link>
-          </article>
-        ))}
-      </div>
-      <div className="row" style={{ marginTop: 16 }}>
-        <button className="secondary" onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</button>
-        <span>Page {page}</span>
-        <button className="secondary" onClick={() => setPage((p) => p + 1)}>Next</button>
-      </div>
-    </section>
+    </div>
   );
 }

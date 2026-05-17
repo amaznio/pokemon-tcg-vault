@@ -3,44 +3,21 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { PaginatedResponse, SetSummary } from '@repo/shared';
 import { queryKeys } from '@repo/shared';
-import { apiFetch } from '@/lib/api';
+import { pokemonApi } from '@/lib/pokemon/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 export default function SetsPage() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
-
-  const setsQuery = useQuery({
-    queryKey: queryKeys.sets.list(query, page, 20),
-    queryFn: () =>
-      apiFetch<PaginatedResponse<SetSummary>>(
-        `/api/sets?query=${encodeURIComponent(query)}&page=${page}&pageSize=20`,
-      ),
-  });
+  const setsQuery = useQuery({ queryKey: queryKeys.sets.list(query, page, 20), queryFn: () => pokemonApi.sets(query, page, 20) });
 
   return (
-    <section>
-      <h1>Sets</h1>
-      <div className="row" style={{ marginBottom: 16 }}>
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search sets" />
-        <button className="secondary" onClick={() => setPage(1)}>Search</button>
-      </div>
-      <div className="card-grid">
-        {setsQuery.data?.data.map((set) => (
-          <article key={set.id} className="panel">
-            {set.logo ? <img src={set.logo} alt={set.name} width={180} height={80} /> : null}
-            <h3>{set.name}</h3>
-            <p>{set.series}</p>
-            <Link href={`/sets/${set.id}`}>View</Link>
-          </article>
-        ))}
-      </div>
-      <div className="row" style={{ marginTop: 16 }}>
-        <button className="secondary" onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</button>
-        <span>Page {page}</span>
-        <button className="secondary" onClick={() => setPage((p) => p + 1)}>Next</button>
-      </div>
+    <section className="space-y-4">
+      <Card><CardHeader><CardTitle>Browse sets</CardTitle></CardHeader><CardContent><Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search sets" /></CardContent></Card>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{setsQuery.data?.data.map((set) => <Card key={set.id}><CardContent className="space-y-2 p-4">{set.logo ? <img src={set.logo} alt={set.name} className="h-16 w-full object-contain" /> : null}<h3 className="font-semibold">{set.name}</h3><p className="text-sm text-slate-600">{set.series}</p><Link className="text-sm font-medium text-slate-900 underline" href={`/sets/${set.id}`}>View set</Link></CardContent></Card>)}</div>
+      <div className="flex items-center gap-2"><button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</button><span className="text-sm">Page {page}</span><button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" onClick={() => setPage((p) => p + 1)}>Next</button></div>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 import { PersonalCardsPage } from '@/components/cards/personal-cards-page';
 
-export default function CollectionPage() {
-  return <PersonalCardsPage mode='owned' />;
+export default function FavoritesPage() {
+  return <PersonalCardsPage mode='favorites' />;
 }

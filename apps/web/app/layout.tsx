@@ -1,10 +1,10 @@
 import './globals.css';
-import Link from 'next/link';
 import { Providers } from '@/components/providers';
+import { AppShell } from '@/components/layout/app-shell';
 
 export const metadata = {
-  title: 'Pokemon TCG Viewer',
-  description: 'Pokemon card and set viewer with local collections',
+  title: 'TCG Vault',
+  description: 'Pokemon card discovery and collection app',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -12,14 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <Providers>
-          <main>
-            <nav className="row" style={{ marginBottom: 20 }}>
-              <Link href="/">Cards</Link>
-              <Link href="/sets">Sets</Link>
-              <Link href="/collection">My Collection</Link>
-            </nav>
-            {children}
-          </main>
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>

@@ -1,7 +1,42 @@
-node_modules
-dist
-.next
-coverage
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Turborepo
+.turbo/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
 .env
 .env.*
 !.env.example
+!.env*.example
+
+# Prisma / local DB files
+*.db
+*.sqlite
+*.sqlite3
+
+# OS / editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Test artifacts
+playwright-report/
+test-results/
