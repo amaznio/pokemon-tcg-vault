@@ -143,9 +143,10 @@ export class CatalogService {
     }
   }
 
-  async searchSets(query: string, page: number, pageSize: number) {
+  async searchSets(query: string, page: number, pageSize: number, orderBy?: string) {
     const normalizedQuery = normalizeSetsQuery(query);
-    const queryHash = createQueryHash({ query: normalizedQuery, page, pageSize });
+    const effectiveOrderBy = orderBy ?? '-releaseDate';
+    const queryHash = createQueryHash({ query: normalizedQuery, page, pageSize, orderBy: effectiveOrderBy });
     const cache = await prisma.setSearchCache.findUnique({ where: { queryHash } });
 
     if (cache && isFresh(cache.expiresAt)) {
@@ -156,7 +157,8 @@ export class CatalogService {
 
     try {
       const q = encodeURIComponent(normalizedQuery || '');
-      const payload = await client.getJson<SetsApiResponse>(`/sets?q=${q}&page=${page}&pageSize=${pageSize}`);
+      const o = effectiveOrderBy ? `&orderBy=${encodeURIComponent(effectiveOrderBy)}` : '';
+      const payload = await client.getJson<SetsApiResponse>(`/sets?q=${q}&page=${page}&pageSize=${pageSize}${o}`);
       const mapped = payload.data.map((set) => mapSetUpsertInput(set, env.SET_TTL_SECONDS));
 
       await prisma.$transaction(

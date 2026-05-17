@@ -7,9 +7,9 @@ export const pokemonApi = {
       `/api/cards?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}`,
     ),
   card: (id: string) => apiFetch<{ data: CardDetail; stale?: boolean }>(`/api/cards/${id}`),
-  sets: (query: string, page: number, pageSize = 20) =>
+  sets: (query: string, page: number, pageSize = 20, orderBy?: string) =>
     apiFetch<PaginatedResponse<SetSummary>>(
-      `/api/sets?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}`,
+      `/api/sets?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}${orderBy ? `&orderBy=${encodeURIComponent(orderBy)}` : ''}`,
     ),
   set: (id: string) => apiFetch<{ data: SetSummary; stale?: boolean }>(`/api/sets/${id}`),
 };

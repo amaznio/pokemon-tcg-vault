@@ -27,7 +27,7 @@ export const registerRoutes = (app: FastifyInstance): void => {
 
   app.get('/api/sets', async (request) => {
     const params = setsQuerySchema.parse(request.query);
-    const result = await catalogService.searchSets(params.query, params.page, params.pageSize);
+    const result = await catalogService.searchSets(params.query, params.page, params.pageSize, params.orderBy);
     return paginated(
       result.data.map(toSetSummary),
       params.page,

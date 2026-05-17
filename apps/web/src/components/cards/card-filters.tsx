@@ -16,7 +16,17 @@ export type DiscoveryFilters = {
   scope: 'all' | 'favorites' | 'owned' | 'wishlist';
 };
 
-export function CardFilters({ value, onChange, onSearch }: { value: DiscoveryFilters; onChange: (next: DiscoveryFilters) => void; onSearch: () => void }) {
+export function CardFilters({
+  value,
+  onChange,
+  onSearch,
+  setOptions,
+}: {
+  value: DiscoveryFilters;
+  onChange: (next: DiscoveryFilters) => void;
+  onSearch: () => void;
+  setOptions: { label: string; value: string }[];
+}) {
   return (
     <Card className="rounded-2xl">
       <CardHeader>
@@ -29,10 +39,10 @@ export function CardFilters({ value, onChange, onSearch }: { value: DiscoveryFil
           <Button onClick={onSearch}><Search className="h-4 w-4" />Search</Button>
         </div>
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-          <Select value={value.set} onChange={(set) => onChange({ ...value, set })} placeholder="Set" options={[]} />
+          <Select value={value.set} onChange={(set) => onChange({ ...value, set })} placeholder="Set" options={setOptions} />
           <Select value={value.type} onChange={(type) => onChange({ ...value, type })} placeholder="Type" options={['Fire','Water','Grass','Lightning','Psychic','Fighting','Darkness','Metal','Dragon','Colorless']} />
-          <Select value={value.rarity} onChange={(rarity) => onChange({ ...value, rarity })} placeholder="Rarity" options={['Common','Uncommon','Rare','Rare Holo']} />
-          <Select value={value.supertype} onChange={(supertype) => onChange({ ...value, supertype })} placeholder="Supertype" options={['Pokemon','Trainer','Energy']} />
+          <Select value={value.rarity} onChange={(rarity) => onChange({ ...value, rarity })} placeholder="Rarity" options={['Common','Uncommon','Rare','Rare Holo','Illustration Rare','Special Illustration Rare','Hyper Rare','Ultra Rare']} />
+          <Select value={value.supertype} onChange={(supertype) => onChange({ ...value, supertype })} placeholder="Supertype" options={['Pokémon','Trainer','Energy']} />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <ToggleGroup value={value.scope} onValueChange={(scope) => onChange({ ...value, scope: scope as DiscoveryFilters['scope'] })} options={[{ value: 'all', label: 'All' },{ value: 'favorites', label: 'Favorites' },{ value: 'owned', label: 'Owned' },{ value: 'wishlist', label: 'Wishlist' }]} />

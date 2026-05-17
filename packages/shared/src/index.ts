@@ -49,8 +49,8 @@ export const queryKeys = {
     detail: (id: string) => ['cards.detail', id] as const,
   },
   sets: {
-    list: (query: string, page: number, pageSize: number) =>
-      ['sets.list', query, page, pageSize] as const,
+    list: (query: string, page: number, pageSize: number, orderBy?: string) =>
+      ['sets.list', query, page, pageSize, orderBy ?? ''] as const,
     detail: (id: string) => ['sets.detail', id] as const,
   },
 };

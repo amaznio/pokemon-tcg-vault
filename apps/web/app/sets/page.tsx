@@ -11,7 +11,12 @@ import { Input } from '@/components/ui/input';
 export default function SetsPage() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
-  const setsQuery = useQuery({ queryKey: queryKeys.sets.list(query, page, 20), queryFn: () => pokemonApi.sets(query, page, 20) });
+  const orderBy = '-releaseDate';
+  const pageSize = 10;
+  const setsQuery = useQuery({
+    queryKey: queryKeys.sets.list(query, page, pageSize, orderBy),
+    queryFn: () => pokemonApi.sets(query, page, pageSize, orderBy),
+  });
 
   return (
     <section className="space-y-4">
