@@ -12,7 +12,8 @@ import { PaginationBar } from '@/components/shared/pagination-bar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const hasAdvancedQuerySyntax = (value: string): boolean => /[:()"]/g.test(value);
-const escapeQueryValue = (value: string): string => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+const escapeQueryValue = (value: string): string =>
+  value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 const quoteIfNeeded = (value: string): string => (/\s/.test(value) ? `"${value}"` : value);
 
 const initialFilters: DiscoveryFilters = {
@@ -35,7 +36,8 @@ const toOrderBy = (sort: string): string | undefined => {
 const buildApiQuery = (filters: DiscoveryFilters, query: string): string => {
   const terms: string[] = [];
   const trimmed = query.trim();
-  if (trimmed) terms.push(hasAdvancedQuerySyntax(trimmed) ? trimmed : `name:"*${escapeQueryValue(trimmed)}*"`);
+  if (trimmed)
+    terms.push(hasAdvancedQuerySyntax(trimmed) ? trimmed : `name:"*${escapeQueryValue(trimmed)}*"`);
   if (filters.set) terms.push(`set.id:${filters.set}`);
   if (filters.type) terms.push(`types:${quoteIfNeeded(filters.type)}`);
   if (filters.rarity) terms.push(`rarity:${quoteIfNeeded(filters.rarity)}`);
@@ -67,20 +69,40 @@ export function CardBrowserPage() {
     queryFn: () => pokemonApi.sets('', 1, 100, '-releaseDate'),
   });
 
-  const setOptions = useMemo(() => (setsQuery.data?.data ?? []).map((set) => ({ label: set.name, value: set.id })), [setsQuery.data?.data]);
+  const setOptions = useMemo(
+    () => (setsQuery.data?.data ?? []).map((set) => ({ label: set.name, value: set.id })),
+    [setsQuery.data?.data],
+  );
 
-  const cards = useMemo(() => (cardsQuery.data?.data ?? []).filter((card) => {
-    if (filters.scope === 'favorites' && !state.isFavorite(card.id)) return false;
-    if (filters.scope === 'owned' && !state.isOwned(card.id)) return false;
-    if (filters.scope === 'wishlist' && !state.isWishlist(card.id)) return false;
-    return true;
-  }), [cardsQuery.data?.data, filters.scope, state]);
+  const cards = useMemo(
+    () =>
+      (cardsQuery.data?.data ?? []).filter((card) => {
+        if (filters.scope === 'favorites' && !state.isFavorite(card.id)) return false;
+        if (filters.scope === 'owned' && !state.isOwned(card.id)) return false;
+        if (filters.scope === 'wishlist' && !state.isWishlist(card.id)) return false;
+        return true;
+      }),
+    [cardsQuery.data?.data, filters.scope, state],
+  );
 
   return (
     <section>
-      <CardHero query={filters.query} onQueryChange={(query) => setFilters((prev) => ({ ...prev, query }))} onSearch={() => setPage(1)} />
-      <CardFilters value={filters} onChange={(next) => { setFilters(next); setPage(1); }} setOptions={setOptions} />
-      <div className="my-5 text-sm text-muted-foreground">{cardsQuery.data?.totalCount ?? cards.length} cards found</div>
+      <CardHero
+        query={filters.query}
+        onQueryChange={(query) => setFilters((prev) => ({ ...prev, query }))}
+        onSearch={() => setPage(1)}
+      />
+      <CardFilters
+        value={filters}
+        onChange={(next) => {
+          setFilters(next);
+          setPage(1);
+        }}
+        setOptions={setOptions}
+      />
+      <div className="my-5 text-sm text-muted-foreground">
+        {cardsQuery.data?.totalCount ?? cards.length} cards found
+      </div>
       <CardGrid
         cards={cards}
         loading={cardsQuery.isLoading}
@@ -94,13 +116,12 @@ export function CardBrowserPage() {
           onToggleWishlist: () => state.toggleWishlist(id),
         })}
       />
-      <div className="mt-6">
-        <PaginationBar page={page} onPrev={() => setPage((prev) => Math.max(1, prev - 1))} onNext={() => setPage((prev) => prev + 1)} />
-      </div>
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
-        <Card className="rounded-2xl"><CardHeader><CardTitle className="text-base">Favorites</CardTitle></CardHeader><CardContent className="text-3xl font-semibold">{state.favoriteIds.size}</CardContent></Card>
-        <Card className="rounded-2xl"><CardHeader><CardTitle className="text-base">Collection</CardTitle></CardHeader><CardContent className="text-3xl font-semibold">{state.ownedIds.size}</CardContent></Card>
-        <Card className="rounded-2xl"><CardHeader><CardTitle className="text-base">Wishlist</CardTitle></CardHeader><CardContent className="text-3xl font-semibold">{state.wishlistIds.size}</CardContent></Card>
+      <div className="mt-6 flex items-center justify-center">
+        <PaginationBar
+          page={page}
+          onPrev={() => setPage((prev) => Math.max(1, prev - 1))}
+          onNext={() => setPage((prev) => prev + 1)}
+        />
       </div>
     </section>
   );
