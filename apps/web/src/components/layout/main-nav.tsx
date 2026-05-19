@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/sheet';
 
 const navItems: { href: Route; label: string }[] = [
-  { href: '/', label: 'Dashboard' },
+  // { href: '/', label: 'Dashboard' },
   { href: '/cards', label: 'Cards' },
   { href: '/sets', label: 'Sets' },
   { href: '/favorites', label: 'Favorites' },
@@ -36,14 +36,14 @@ export function MainNav() {
         <div className="flex items-center gap-2 xl:gap-4">
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger
-              render={(
+              render={
                 <Button
                   variant="outline"
                   size="icon"
                   className="rounded-xl border-border xl:hidden"
                   aria-label="Open navigation menu"
                 />
-              )}
+              }
             >
               <Menu className="h-4 w-4" />
             </SheetTrigger>
@@ -62,7 +62,7 @@ export function MainNav() {
                       onClick={() => setMenuOpen(false)}
                       className={cn(
                         'rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
-                        pathname === item.href && 'bg-muted text-foreground'
+                        pathname === item.href && 'bg-muted text-foreground',
                       )}
                     >
                       {item.label}
@@ -83,7 +83,10 @@ export function MainNav() {
             </SheetContent>
           </Sheet>
 
-          <Link href={'/'} className="shrink-0 text-lg font-semibold tracking-tight text-foreground">
+          <Link
+            href={'/'}
+            className="shrink-0 text-lg font-semibold tracking-tight text-foreground"
+          >
             TCG Vault
           </Link>
 
@@ -94,7 +97,7 @@ export function MainNav() {
                 href={item.href}
                 className={cn(
                   'rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
-                  pathname === item.href && 'bg-muted text-foreground'
+                  pathname === item.href && 'bg-muted text-foreground',
                 )}
               >
                 {item.label}
@@ -105,18 +108,34 @@ export function MainNav() {
           <div className="hidden min-w-0 flex-1 items-center xl:flex">
             <div className="relative w-full">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search Pikachu, Charizard, trainer..." className="h-10 rounded-xl border-border bg-card pl-10" />
+              <Input
+                placeholder="Search Pikachu, Charizard, trainer..."
+                className="h-10 rounded-xl border-border bg-card pl-10"
+              />
             </div>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" size="icon" className="rounded-full border-border" aria-label="Toggle theme">
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full border-border"
+              aria-label="Toggle theme"
+            >
               <Sun className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" className="rounded-full border-border" aria-label="Notifications">
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full border-border"
+              aria-label="Notifications"
+            >
               <Bell className="h-4 w-4" />
             </Button>
-            <div className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-sm" aria-label="Profile">
+            <div
+              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-sm"
+              aria-label="Profile"
+            >
               🟡
             </div>
           </div>
@@ -125,7 +144,10 @@ export function MainNav() {
         <div className="xl:hidden">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search Pikachu, Charizard, trainer..." className="h-10 rounded-xl border-border bg-card pl-10" />
+            <Input
+              placeholder="Search Pikachu, Charizard, trainer..."
+              className="h-10 rounded-xl border-border bg-card pl-10"
+            />
           </div>
         </div>
       </div>

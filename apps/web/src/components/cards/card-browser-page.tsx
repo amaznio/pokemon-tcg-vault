@@ -9,18 +9,18 @@ import { CardHero } from '@/components/cards/card-hero';
 import { CardFilters, type DiscoveryFilters } from '@/components/cards/card-filters';
 import { CardGrid } from '@/components/cards/card-grid';
 import { PaginationBar } from '@/components/shared/pagination-bar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const hasAdvancedQuerySyntax = (value: string): boolean => /[:()"]/g.test(value);
 const escapeQueryValue = (value: string): string =>
   value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 const quoteIfNeeded = (value: string): string => (/\s/.test(value) ? `"${value}"` : value);
+const PAGE_SIZE = 20;
 
 const initialFilters: DiscoveryFilters = {
   query: '',
   set: '',
   type: '',
-  rarity: '',
+  rarity: [],
   supertype: '',
   scope: 'all',
   sort: 'relevance',
@@ -40,7 +40,10 @@ const buildApiQuery = (filters: DiscoveryFilters, query: string): string => {
     terms.push(hasAdvancedQuerySyntax(trimmed) ? trimmed : `name:"*${escapeQueryValue(trimmed)}*"`);
   if (filters.set) terms.push(`set.id:${filters.set}`);
   if (filters.type) terms.push(`types:${quoteIfNeeded(filters.type)}`);
-  if (filters.rarity) terms.push(`rarity:${quoteIfNeeded(filters.rarity)}`);
+  if (filters.rarity.length) {
+    const rarityTerms = filters.rarity.map((rarity) => `rarity:${quoteIfNeeded(rarity)}`);
+    terms.push(`(${rarityTerms.join(' OR ')})`);
+  }
   if (filters.supertype) terms.push(`supertype:${quoteIfNeeded(filters.supertype)}`);
   return terms.join(' ');
 };
@@ -60,8 +63,8 @@ export function CardBrowserPage() {
   const apiQuery = useMemo(() => buildApiQuery(filters, debouncedQuery), [filters, debouncedQuery]);
 
   const cardsQuery = useQuery({
-    queryKey: queryKeys.cards.list(apiQuery, page, 20, orderBy),
-    queryFn: () => pokemonApi.cards(apiQuery, page, 20, orderBy),
+    queryKey: queryKeys.cards.list(apiQuery, page, PAGE_SIZE, orderBy),
+    queryFn: () => pokemonApi.cards(apiQuery, page, PAGE_SIZE, orderBy),
   });
 
   const setsQuery = useQuery({
@@ -119,8 +122,9 @@ export function CardBrowserPage() {
       <div className="mt-6 flex items-center justify-center">
         <PaginationBar
           page={page}
-          onPrev={() => setPage((prev) => Math.max(1, prev - 1))}
-          onNext={() => setPage((prev) => prev + 1)}
+          totalCount={cardsQuery.data?.totalCount ?? 0}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
         />
       </div>
     </section>

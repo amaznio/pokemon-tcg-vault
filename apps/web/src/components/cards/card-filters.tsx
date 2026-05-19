@@ -1,7 +1,14 @@
 'use client';
 
-import { LayoutGrid, List, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, LayoutGrid, List, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -17,7 +24,7 @@ export type DiscoveryFilters = {
   query: string;
   set: string;
   type: string;
-  rarity: string;
+  rarity: string[];
   supertype: string;
   scope: 'all' | 'favorites' | 'owned' | 'wishlist';
   sort: string;
@@ -26,6 +33,7 @@ export type DiscoveryFilters = {
 const typeOptions = ['Fire', 'Water', 'Grass', 'Lightning', 'Psychic', 'Fighting', 'Darkness', 'Metal', 'Dragon', 'Colorless'];
 const rarityOptions = ['Common', 'Uncommon', 'Rare', 'Rare Holo', 'Illustration Rare', 'Special Illustration Rare', 'Ultra Rare', 'Hyper Rare'];
 const supertypeOptions = ['Pokémon', 'Trainer', 'Energy'];
+const FILTER_CONTROL_HEIGHT = '!h-10';
 
 function FilterSelect({
   value,
@@ -34,6 +42,7 @@ function FilterSelect({
   onValueChange,
   className,
   contentClassName,
+  valueClassName,
 }: {
   value: string;
   placeholder: string;
@@ -41,11 +50,12 @@ function FilterSelect({
   onValueChange: (next: string | null) => void;
   className?: string;
   contentClassName?: string;
+  valueClassName?: string;
 }) {
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className={className}>
-        <SelectValue placeholder={placeholder} className="truncate" />
+        <SelectValue placeholder={placeholder} className={['truncate', valueClassName].filter(Boolean).join(' ')} />
       </SelectTrigger>
       <SelectContent className={contentClassName}>
         <SelectGroup>
@@ -61,6 +71,62 @@ function FilterSelect({
   );
 }
 
+function RarityMultiSelect({
+  value,
+  onChange,
+}: {
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const triggerLabel =
+    value.length === 0
+      ? 'Rarity'
+      : value.length === 1
+        ? value[0]
+        : `${value.length} rarities`;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="outline"
+            className={`${FILTER_CONTROL_HEIGHT} w-full min-w-0 justify-between rounded-xl border-border px-3 font-normal text-foreground`}
+          />
+        }
+      >
+        <span className="truncate">{triggerLabel}</span>
+        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-60" aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="min-w-72">
+        <DropdownMenuGroup>
+          <DropdownMenuCheckboxItem
+            checked={value.length === 0}
+            onCheckedChange={() => onChange([])}
+          >
+            All
+          </DropdownMenuCheckboxItem>
+          {rarityOptions.map((option) => (
+            <DropdownMenuCheckboxItem
+              key={option}
+              checked={value.includes(option)}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  onChange([...value, option]);
+                  return;
+                }
+                onChange(value.filter((entry) => entry !== option));
+              }}
+            >
+              {option}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function CardFilters({ value, onChange, setOptions }: { value: DiscoveryFilters; onChange: (next: DiscoveryFilters) => void; setOptions: { label: string; value: string }[] }) {
   return (
     <section className="space-y-4 border-b border-border pb-4">
@@ -70,7 +136,7 @@ export function CardFilters({ value, onChange, setOptions }: { value: DiscoveryF
           onValueChange={(set) => onChange({ ...value, set: !set || set === 'all' ? '' : set })}
           placeholder="Set"
           options={setOptions}
-          className="h-10 w-full min-w-0"
+          className={`${FILTER_CONTROL_HEIGHT} w-full min-w-0 rounded-xl border-border`}
           contentClassName="min-w-56"
         />
         <FilterSelect
@@ -78,27 +144,20 @@ export function CardFilters({ value, onChange, setOptions }: { value: DiscoveryF
           onValueChange={(type) => onChange({ ...value, type: !type || type === 'all' ? '' : type })}
           placeholder="Type"
           options={typeOptions.map((option) => ({ label: option, value: option }))}
-          className="h-10 w-full min-w-0"
+          className={`${FILTER_CONTROL_HEIGHT} w-full min-w-0 rounded-xl border-border`}
           contentClassName="min-w-56"
         />
-        <FilterSelect
-          value={value.rarity}
-          onValueChange={(rarity) => onChange({ ...value, rarity: !rarity || rarity === 'all' ? '' : rarity })}
-          placeholder="Rarity"
-          options={rarityOptions.map((option) => ({ label: option, value: option }))}
-          className="h-10 w-full min-w-0"
-          contentClassName="min-w-72"
-        />
+        <RarityMultiSelect value={value.rarity} onChange={(rarity) => onChange({ ...value, rarity })} />
         <FilterSelect
           value={value.supertype}
           onValueChange={(supertype) => onChange({ ...value, supertype: !supertype || supertype === 'all' ? '' : supertype })}
           placeholder="Supertype"
           options={supertypeOptions.map((option) => ({ label: option, value: option }))}
-          className="h-10 w-full min-w-0"
+          className={`${FILTER_CONTROL_HEIGHT} w-full min-w-0 rounded-xl border-border`}
           contentClassName="min-w-56"
         />
         <Sheet>
-          <SheetTrigger render={<Button variant="outline" className="h-10 rounded-xl border-border px-4"><SlidersHorizontal className="mr-2 h-4 w-4" />Advanced filters</Button>} />
+          <SheetTrigger render={<Button variant="outline" className={`${FILTER_CONTROL_HEIGHT} rounded-xl border-border px-4`}><SlidersHorizontal className="mr-2 h-4 w-4" />Advanced filters</Button>} />
           <SheetContent side="right">
             <SheetHeader>
               <SheetTitle>Advanced filters</SheetTitle>
@@ -126,6 +185,7 @@ export function CardFilters({ value, onChange, setOptions }: { value: DiscoveryF
             options={[{ value: 'relevance', label: 'Relevance' }, { value: 'name', label: 'Name' }, { value: 'set', label: 'Set' }, { value: 'rarity', label: 'Rarity' }]}
             className="h-10 w-48"
             contentClassName="min-w-48"
+            valueClassName="capitalize"
           />
           <Button variant="outline" size="icon" className="rounded-xl border-border"><LayoutGrid className="h-4 w-4" /></Button>
           <Button variant="outline" size="icon" className="rounded-xl border-border"><List className="h-4 w-4" /></Button>
