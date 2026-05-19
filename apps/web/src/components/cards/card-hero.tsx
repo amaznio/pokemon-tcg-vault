@@ -22,7 +22,13 @@ export function CardHero({
         <p className="text-lg text-muted-foreground">
           Search by Pokemon, set, rarity, type, or collector number.
         </p>
-        <div className="flex gap-2">
+        <form
+          className="flex gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSearch();
+          }}
+        >
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -30,12 +36,17 @@ export function CardHero({
               onChange={(e) => onQueryChange(e.target.value)}
               className="h-11 rounded-xl pl-10"
               placeholder="Search Pikachu, Charizard, trainer..."
+              suppressHydrationWarning
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
             />
           </div>
-          <Button className="h-11 rounded-xl bg-primary text-primary-foreground" onClick={onSearch}>
+          <Button type="submit" className="h-11 rounded-xl bg-primary text-primary-foreground">
             Search
           </Button>
-        </div>
+        </form>
       </div>
     </section>
   );

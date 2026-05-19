@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import type { Route } from 'next';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@repo/shared';
 import { pokemonApi } from '@/lib/pokemon/api';
 import { useLocalCardState } from '@/hooks/use-local-card-state';
@@ -14,7 +16,8 @@ const hasAdvancedQuerySyntax = (value: string): boolean => /[:()"]/g.test(value)
 const escapeQueryValue = (value: string): string =>
   value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 const quoteIfNeeded = (value: string): string => (/\s/.test(value) ? `"${value}"` : value);
-const PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 20;
+const SETS_SELECTOR_PAGE_SIZE = 100;
 
 const initialFilters: DiscoveryFilters = {
   query: '',
@@ -27,8 +30,9 @@ const initialFilters: DiscoveryFilters = {
 };
 
 const toOrderBy = (sort: string): string | undefined => {
+  if (sort === 'number') return 'number';
   if (sort === 'name') return 'name';
-  if (sort === 'set') return 'set.name';
+  if (sort === 'set') return 'set.name,number';
   if (sort === 'rarity') return 'rarity';
   return undefined;
 };
@@ -49,27 +53,45 @@ const buildApiQuery = (filters: DiscoveryFilters, query: string): string => {
 };
 
 export function CardBrowserPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const currentUrlQuery = searchParams.get('q') ?? '';
   const [filters, setFilters] = useState(initialFilters);
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [heroQuery, setHeroQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [useLargeImages, setUseLargeImages] = useState(false);
+  const gridTopRef = useRef<HTMLDivElement | null>(null);
   const state = useLocalCardState();
 
   useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedQuery(filters.query), 350);
-    return () => clearTimeout(timeout);
-  }, [filters.query]);
+    setHeroQuery(currentUrlQuery);
+    setFilters((prev) => ({ ...prev, query: currentUrlQuery }));
+    setPage(1);
+  }, [currentUrlQuery]);
 
   const orderBy = toOrderBy(filters.sort);
-  const apiQuery = useMemo(() => buildApiQuery(filters, debouncedQuery), [filters, debouncedQuery]);
+  const apiQuery = useMemo(() => buildApiQuery(filters, filters.query), [filters]);
+
+  const commitHeroSearch = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    const next = heroQuery.trim();
+    if (next) params.set('q', next);
+    else params.delete('q');
+    params.delete('page');
+    const query = params.toString();
+    router.push((`/cards${query ? `?${query}` : ''}`) as Route);
+  };
 
   const cardsQuery = useQuery({
-    queryKey: queryKeys.cards.list(apiQuery, page, PAGE_SIZE, orderBy),
-    queryFn: () => pokemonApi.cards(apiQuery, page, PAGE_SIZE, orderBy),
+    queryKey: queryKeys.cards.list(apiQuery, page, pageSize, orderBy),
+    queryFn: () => pokemonApi.cards(apiQuery, page, pageSize, orderBy),
+    placeholderData: keepPreviousData,
   });
 
   const setsQuery = useQuery({
-    queryKey: queryKeys.sets.list('', 1, 100, '-releaseDate'),
-    queryFn: () => pokemonApi.sets('', 1, 100, '-releaseDate'),
+    queryKey: queryKeys.sets.list('', 1, SETS_SELECTOR_PAGE_SIZE, '-releaseDate'),
+    queryFn: () => pokemonApi.sets('', 1, SETS_SELECTOR_PAGE_SIZE, '-releaseDate'),
   });
 
   const setOptions = useMemo(
@@ -88,12 +110,17 @@ export function CardBrowserPage() {
     [cardsQuery.data?.data, filters.scope, state],
   );
 
+  const handlePageChange = (nextPage: number) => {
+    gridTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setPage(nextPage);
+  };
+
   return (
     <section>
       <CardHero
-        query={filters.query}
-        onQueryChange={(query) => setFilters((prev) => ({ ...prev, query }))}
-        onSearch={() => setPage(1)}
+        query={heroQuery}
+        onQueryChange={setHeroQuery}
+        onSearch={commitHeroSearch}
       />
       <CardFilters
         value={filters}
@@ -102,7 +129,15 @@ export function CardBrowserPage() {
           setPage(1);
         }}
         setOptions={setOptions}
+        pageSize={pageSize}
+        onPageSizeChange={(next) => {
+          setPageSize(next);
+          setPage(1);
+        }}
+        useLargeImages={useLargeImages}
+        onUseLargeImagesChange={setUseLargeImages}
       />
+      <div ref={gridTopRef} />
       <div className="my-5 text-sm text-muted-foreground">
         {cardsQuery.data?.totalCount ?? cards.length} cards found
       </div>
@@ -110,6 +145,7 @@ export function CardBrowserPage() {
         cards={cards}
         loading={cardsQuery.isLoading}
         emptyMessage="No cards found"
+        useLargeImages={useLargeImages}
         getActionState={(id) => ({
           isFavorite: state.isFavorite(id),
           isOwned: state.isOwned(id),
@@ -123,8 +159,8 @@ export function CardBrowserPage() {
         <PaginationBar
           page={page}
           totalCount={cardsQuery.data?.totalCount ?? 0}
-          pageSize={PAGE_SIZE}
-          onPageChange={setPage}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
         />
       </div>
     </section>

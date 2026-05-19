@@ -17,8 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 
 export type DiscoveryFilters = {
   query: string;
@@ -37,6 +38,7 @@ const FILTER_CONTROL_HEIGHT = '!h-10';
 
 function FilterSelect({
   value,
+  selectedLabel,
   placeholder,
   options,
   onValueChange,
@@ -45,6 +47,7 @@ function FilterSelect({
   valueClassName,
 }: {
   value: string;
+  selectedLabel?: string;
   placeholder: string;
   options: { label: string; value: string }[];
   onValueChange: (next: string | null) => void;
@@ -55,7 +58,11 @@ function FilterSelect({
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className={className}>
-        <SelectValue placeholder={placeholder} className={['truncate', valueClassName].filter(Boolean).join(' ')} />
+        {selectedLabel ? (
+          <span className={['truncate', valueClassName].filter(Boolean).join(' ')}>{selectedLabel}</span>
+        ) : (
+          <SelectValue placeholder={placeholder} className={['truncate', valueClassName].filter(Boolean).join(' ')} />
+        )}
       </SelectTrigger>
       <SelectContent className={contentClassName}>
         <SelectGroup>
@@ -127,35 +134,60 @@ function RarityMultiSelect({
   );
 }
 
-export function CardFilters({ value, onChange, setOptions }: { value: DiscoveryFilters; onChange: (next: DiscoveryFilters) => void; setOptions: { label: string; value: string }[] }) {
+export function CardFilters({
+  value,
+  onChange,
+  setOptions,
+  pageSize,
+  onPageSizeChange,
+  useLargeImages,
+  onUseLargeImagesChange,
+}: {
+  value: DiscoveryFilters;
+  onChange: (next: DiscoveryFilters) => void;
+  setOptions: { label: string; value: string }[];
+  pageSize: number;
+  onPageSizeChange: (next: number) => void;
+  useLargeImages: boolean;
+  onUseLargeImagesChange: (next: boolean) => void;
+}) {
+  const selectedSetLabel = setOptions.find((option) => option.value === value.set)?.label;
+
+  const topFilters = (
+    <>
+      <FilterSelect
+        value={value.set}
+        {...(selectedSetLabel ? { selectedLabel: selectedSetLabel } : {})}
+        onValueChange={(set) => onChange({ ...value, set: !set || set === 'all' ? '' : set })}
+        placeholder="Set"
+        options={setOptions}
+        className={`${FILTER_CONTROL_HEIGHT} w-full min-w-0 rounded-xl border-border`}
+        contentClassName="min-w-56"
+      />
+      <FilterSelect
+        value={value.type}
+        onValueChange={(type) => onChange({ ...value, type: !type || type === 'all' ? '' : type })}
+        placeholder="Type"
+        options={typeOptions.map((option) => ({ label: option, value: option }))}
+        className={`${FILTER_CONTROL_HEIGHT} w-full min-w-0 rounded-xl border-border`}
+        contentClassName="min-w-56"
+      />
+      <RarityMultiSelect value={value.rarity} onChange={(rarity) => onChange({ ...value, rarity })} />
+      <FilterSelect
+        value={value.supertype}
+        onValueChange={(supertype) => onChange({ ...value, supertype: !supertype || supertype === 'all' ? '' : supertype })}
+        placeholder="Supertype"
+        options={supertypeOptions.map((option) => ({ label: option, value: option }))}
+        className={`${FILTER_CONTROL_HEIGHT} w-full min-w-0 rounded-xl border-border`}
+        contentClassName="min-w-56"
+      />
+    </>
+  );
+
   return (
     <section className="space-y-4 border-b border-border pb-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)_auto]">
-        <FilterSelect
-          value={value.set}
-          onValueChange={(set) => onChange({ ...value, set: !set || set === 'all' ? '' : set })}
-          placeholder="Set"
-          options={setOptions}
-          className={`${FILTER_CONTROL_HEIGHT} w-full min-w-0 rounded-xl border-border`}
-          contentClassName="min-w-56"
-        />
-        <FilterSelect
-          value={value.type}
-          onValueChange={(type) => onChange({ ...value, type: !type || type === 'all' ? '' : type })}
-          placeholder="Type"
-          options={typeOptions.map((option) => ({ label: option, value: option }))}
-          className={`${FILTER_CONTROL_HEIGHT} w-full min-w-0 rounded-xl border-border`}
-          contentClassName="min-w-56"
-        />
-        <RarityMultiSelect value={value.rarity} onChange={(rarity) => onChange({ ...value, rarity })} />
-        <FilterSelect
-          value={value.supertype}
-          onValueChange={(supertype) => onChange({ ...value, supertype: !supertype || supertype === 'all' ? '' : supertype })}
-          placeholder="Supertype"
-          options={supertypeOptions.map((option) => ({ label: option, value: option }))}
-          className={`${FILTER_CONTROL_HEIGHT} w-full min-w-0 rounded-xl border-border`}
-          contentClassName="min-w-56"
-        />
+      <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)_auto]">
+        {topFilters}
         <Sheet>
           <SheetTrigger render={<Button variant="outline" className={`${FILTER_CONTROL_HEIGHT} rounded-xl border-border px-4`}><SlidersHorizontal className="mr-2 h-4 w-4" />Advanced filters</Button>} />
           <SheetContent side="right">
@@ -166,27 +198,77 @@ export function CardFilters({ value, onChange, setOptions }: { value: DiscoveryF
           </SheetContent>
         </Sheet>
       </div>
+      <div className="md:hidden">
+        <Drawer>
+          <DrawerTrigger
+            render={
+              <Button variant="outline" className={`${FILTER_CONTROL_HEIGHT} w-full rounded-xl border-border px-4`}>
+                <SlidersHorizontal className="mr-2 h-4 w-4" />
+                Filters
+              </Button>
+            }
+          />
+          <DrawerContent className="max-h-[88vh] overflow-y-auto pb-4">
+            <DrawerHeader className="px-6">
+              <DrawerTitle>Filters</DrawerTitle>
+              <DrawerDescription>Refine card results using filters and sorting.</DrawerDescription>
+            </DrawerHeader>
+            <div className="mt-2 space-y-4 px-6 pb-6">
+              <div className="grid gap-3">
+                {topFilters}
+              </div>
+            </div>
+          </DrawerContent>
+        </Drawer>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <ToggleGroup
-          value={[value.scope]}
-          onValueChange={(scope) => onChange({ ...value, scope: (scope[0] ?? 'all') as DiscoveryFilters['scope'] })}
-          spacing={0}
+        <Tabs
+          value={value.scope}
+          onValueChange={(scope) =>
+            onChange({ ...value, scope: (scope as DiscoveryFilters['scope']) ?? 'all' })
+          }
         >
-          <ToggleGroupItem value="all">All</ToggleGroupItem>
-          <ToggleGroupItem value="favorites">Favorites</ToggleGroupItem>
-          <ToggleGroupItem value="owned">Owned</ToggleGroupItem>
-          <ToggleGroupItem value="wishlist">Wishlist</ToggleGroupItem>
-        </ToggleGroup>
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="favorites">Favorites</TabsTrigger>
+            <TabsTrigger value="owned">Owned</TabsTrigger>
+            <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <div className="flex items-center gap-2">
           <FilterSelect
             value={value.sort}
             onValueChange={(sort) => onChange({ ...value, sort: sort ?? 'relevance' })}
             placeholder="Sort"
-            options={[{ value: 'relevance', label: 'Relevance' }, { value: 'name', label: 'Name' }, { value: 'set', label: 'Set' }, { value: 'rarity', label: 'Rarity' }]}
+            options={[{ value: 'number', label: 'Number' }, { value: 'relevance', label: 'Relevance' }, { value: 'name', label: 'Name' }, { value: 'set', label: 'Set' }, { value: 'rarity', label: 'Rarity' }]}
             className="h-10 w-48"
             contentClassName="min-w-48"
             valueClassName="capitalize"
           />
+          <Select
+            value={String(pageSize)}
+            onValueChange={(next) => onPageSizeChange(Number(next))}
+          >
+            <SelectTrigger className="h-10 w-28 rounded-xl border-border">
+              <SelectValue placeholder="Results" />
+            </SelectTrigger>
+            <SelectContent className="min-w-28">
+              <SelectGroup>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="40">40</SelectItem>
+                <SelectItem value="60">60</SelectItem>
+                <SelectItem value="80">80</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <Button
+            variant={useLargeImages ? 'default' : 'outline'}
+            className="h-10 rounded-xl px-3"
+            onClick={() => onUseLargeImagesChange(!useLargeImages)}
+          >
+            {useLargeImages ? 'Large' : 'Small'}
+          </Button>
           <Button variant="outline" size="icon" className="rounded-xl border-border"><LayoutGrid className="h-4 w-4" /></Button>
           <Button variant="outline" size="icon" className="rounded-xl border-border"><List className="h-4 w-4" /></Button>
         </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import type { MouseEvent } from 'react';
 import { Bookmark, CheckCircle2, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -14,6 +15,13 @@ export type CardActionState = {
 };
 
 export function CardActions({ state }: { state: CardActionState }) {
+  const stopClick =
+    (handler: () => void) => (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      handler();
+    };
+
   return (
     <div className="flex items-center gap-1">
       <Tooltip>
@@ -23,12 +31,12 @@ export function CardActions({ state }: { state: CardActionState }) {
               size="icon"
               variant="ghost"
               className={state.isFavorite ? 'text-primary' : 'text-muted-foreground'}
-              onClick={state.onToggleFavorite}
+              onClick={stopClick(state.onToggleFavorite)}
               aria-label="Toggle favorite"
             />
           }
         >
-          <Heart className="h-4 w-4" />
+          <Heart className={state.isFavorite ? 'h-4 w-4 fill-current' : 'h-4 w-4'} />
         </TooltipTrigger>
         <TooltipContent>Add/remove favorite</TooltipContent>
       </Tooltip>
@@ -39,7 +47,7 @@ export function CardActions({ state }: { state: CardActionState }) {
               size="icon"
               variant="ghost"
               className={state.isOwned ? 'text-primary' : 'text-muted-foreground'}
-              onClick={state.onToggleOwned}
+              onClick={stopClick(state.onToggleOwned)}
               aria-label="Toggle owned"
             />
           }
@@ -55,7 +63,7 @@ export function CardActions({ state }: { state: CardActionState }) {
               size="icon"
               variant="ghost"
               className={state.isWishlisted ? 'text-primary' : 'text-muted-foreground'}
-              onClick={state.onToggleWishlist}
+              onClick={stopClick(state.onToggleWishlist)}
               aria-label="Toggle wishlist"
             />
           }

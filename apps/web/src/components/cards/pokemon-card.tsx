@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import type { MouseEvent } from 'react';
 import { Heart, Library, Eye, Bookmark } from 'lucide-react';
 import type { CardSummary } from '@repo/shared';
 import { Badge } from '@/components/ui/badge';
@@ -16,11 +17,18 @@ export type CardActionState = {
 };
 
 export function CardActions({ state }: { state: CardActionState }) {
+  const stopClick =
+    (handler: () => void) => (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      handler();
+    };
+
   return (
     <div className="absolute right-2 top-2 flex gap-1">
-      <Button size="icon" variant={state.isFavorite ? 'default' : 'secondary'} aria-label="Toggle favorite" onClick={state.onToggleFavorite}><Heart className="h-4 w-4" /></Button>
-      <Button size="icon" variant={state.isOwned ? 'default' : 'secondary'} aria-label="Toggle owned" onClick={state.onToggleOwned}><Library className="h-4 w-4" /></Button>
-      <Button size="icon" variant={state.isWishlisted ? 'default' : 'secondary'} aria-label="Toggle wishlist" onClick={state.onToggleWishlist}><Bookmark className="h-4 w-4" /></Button>
+      <Button size="icon" variant={state.isFavorite ? 'default' : 'secondary'} aria-label="Toggle favorite" onClick={stopClick(state.onToggleFavorite)}><Heart className={state.isFavorite ? 'h-4 w-4 fill-current' : 'h-4 w-4'} /></Button>
+      <Button size="icon" variant={state.isOwned ? 'default' : 'secondary'} aria-label="Toggle owned" onClick={stopClick(state.onToggleOwned)}><Library className="h-4 w-4" /></Button>
+      <Button size="icon" variant={state.isWishlisted ? 'default' : 'secondary'} aria-label="Toggle wishlist" onClick={stopClick(state.onToggleWishlist)}><Bookmark className="h-4 w-4" /></Button>
     </div>
   );
 }

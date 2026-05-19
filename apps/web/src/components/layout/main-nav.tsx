@@ -1,9 +1,9 @@
 'use client';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Bell, Menu, Search, Sun } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RecentCardList } from '@/components/cards/recent-card-list';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,24 @@ const navItems: { href: Route; label: string }[] = [
 
 export function MainNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setSearchQuery(searchParams.get('q') ?? '');
+  }, [searchParams]);
+
+  const submitSearch = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    const next = searchQuery.trim();
+    if (next) params.set('q', next);
+    else params.delete('q');
+    params.delete('page');
+    const query = params.toString();
+    router.push((`/cards${query ? `?${query}` : ''}`) as Route);
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/90">
@@ -106,13 +123,26 @@ export function MainNav() {
           </nav>
 
           <div className="hidden min-w-0 flex-1 items-center xl:flex">
-            <div className="relative w-full">
+            <form
+              className="relative w-full"
+              onSubmit={(event) => {
+                event.preventDefault();
+                submitSearch();
+              }}
+            >
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search Pikachu, Charizard, trainer..."
                 className="h-10 rounded-xl border-border bg-card pl-10"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                suppressHydrationWarning
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
               />
-            </div>
+            </form>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
@@ -142,13 +172,26 @@ export function MainNav() {
         </div>
 
         <div className="xl:hidden">
-          <div className="relative">
+          <form
+            className="relative"
+            onSubmit={(event) => {
+              event.preventDefault();
+              submitSearch();
+            }}
+          >
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search Pikachu, Charizard, trainer..."
               className="h-10 rounded-xl border-border bg-card pl-10"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              suppressHydrationWarning
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
             />
-          </div>
+          </form>
         </div>
       </div>
     </header>

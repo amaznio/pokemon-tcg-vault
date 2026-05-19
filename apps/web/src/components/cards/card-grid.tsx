@@ -6,7 +6,19 @@ import type { CardActionState } from '@/components/cards/card-actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 
-export function CardGrid({ cards, loading, getActionState, emptyMessage }: { cards: CardSummary[]; loading?: boolean; getActionState: (id: string) => CardActionState; emptyMessage: string }) {
+export function CardGrid({
+  cards,
+  loading,
+  getActionState,
+  emptyMessage,
+  useLargeImages = false,
+}: {
+  cards: CardSummary[];
+  loading?: boolean;
+  getActionState: (id: string) => CardActionState;
+  emptyMessage: string;
+  useLargeImages?: boolean;
+}) {
   if (loading) {
     return <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-[370px] rounded-xl" />)}</div>;
   }
@@ -17,7 +29,7 @@ export function CardGrid({ cards, loading, getActionState, emptyMessage }: { car
 
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {cards.map((card) => <PokemonCardTile key={card.id} card={card} actionState={getActionState(card.id)} />)}
+      {cards.map((card) => <PokemonCardTile key={card.id} card={card} actionState={getActionState(card.id)} useLargeImages={useLargeImages} />)}
     </div>
   );
 }

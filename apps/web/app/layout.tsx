@@ -10,12 +10,15 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 export const metadata = {
   title: 'TCG Vault',
   description: 'Pokemon card discovery and collection app',
+  other: {
+    google: 'notranslate',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={cn('font-sans', geist.variable)}>
-      <body>
+    <html lang="en" className={cn('font-sans', geist.variable)} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <TooltipProvider>
           <Providers>
             <AppShell>{children}</AppShell>

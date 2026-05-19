@@ -8,7 +8,29 @@ export const registerRoutes = (app: FastifyInstance): void => {
 
   app.get('/api/cards', async (request) => {
     const params = cardsQuerySchema.parse(request.query);
+    request.log.info(
+      {
+        query: params.query,
+        page: params.page,
+        pageSize: params.pageSize,
+        orderBy: params.orderBy ?? null,
+      },
+      'GET /api/cards request',
+    );
     const result = await catalogService.searchCards(params.query, params.page, params.pageSize, params.orderBy);
+    request.log.info(
+      {
+        query: params.query,
+        page: params.page,
+        pageSize: params.pageSize,
+        orderBy: params.orderBy ?? null,
+        count: result.count,
+        totalCount: result.totalCount,
+        returned: result.data.length,
+        stale: result.stale ?? false,
+      },
+      'GET /api/cards response',
+    );
     return paginated(
       result.data.map(toCardSummary),
       params.page,
