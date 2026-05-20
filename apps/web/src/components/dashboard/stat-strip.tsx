@@ -1,28 +1,48 @@
-import { BadgeDollarSign, Bookmark, Heart, Layers, ScanSearch } from 'lucide-react';
+import { Bookmark, Heart, Layers, ScanSearch } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { StatItem } from '@/components/dashboard/stat-item';
-import { dashboardStats } from '@/lib/dashboard/mock-dashboard-data';
+import type { DashboardStats } from '@/lib/dashboard/types';
 
-export function StatStrip() {
+export function StatStrip({ stats, loading = false }: { stats: DashboardStats; loading?: boolean }) {
   return (
     <section className="rounded-2xl border border-border/70 bg-card p-6">
-      <div className="grid gap-6 xl:grid-cols-[1fr_auto_1.3fr_auto_1fr_auto_1fr_auto_1.2fr] xl:items-center">
-        <StatItem label="Total cards" value={dashboardStats.totalCards.value} change={dashboardStats.totalCards.change} reserveProgressSlot icon={<ScanSearch className="size-5 text-primary" />} />
+      <div className="grid gap-6 xl:grid-cols-[1fr_auto_1.3fr_auto_1fr_auto_1fr] xl:items-center">
+        <StatItem
+          label="Total cards"
+          value={stats.totalCards.value}
+          {...(stats.totalCards.change ? { change: stats.totalCards.change } : {})}
+          reserveProgressSlot
+          loading={loading}
+          icon={<ScanSearch className="size-5 text-primary" />}
+        />
         <Separator orientation="vertical" className="hidden h-16 xl:block" />
         <StatItem
           label="Sets collected"
-          value={dashboardStats.setsCollected.value}
-          change={dashboardStats.setsCollected.change}
-          progress={dashboardStats.setsCollected.progress}
+          value={stats.setsCollected.value}
+          {...(stats.setsCollected.change ? { change: stats.setsCollected.change } : {})}
+          {...(typeof stats.setsCollected.progress === 'number' ? { progress: stats.setsCollected.progress } : {})}
           reserveProgressSlot
+          loading={loading}
           icon={<Layers className="size-5 text-primary" />}
         />
         <Separator orientation="vertical" className="hidden h-16 xl:block" />
-        <StatItem label="Favorites" value={dashboardStats.favorites.value} change={dashboardStats.favorites.change} reserveProgressSlot icon={<Heart className="size-5 text-primary" />} />
+        <StatItem
+          label="Favorites"
+          value={stats.favorites.value}
+          {...(stats.favorites.change ? { change: stats.favorites.change } : {})}
+          reserveProgressSlot
+          loading={loading}
+          icon={<Heart className="size-5 text-primary" />}
+        />
         <Separator orientation="vertical" className="hidden h-16 xl:block" />
-        <StatItem label="Wishlist" value={dashboardStats.wishlist.value} change={dashboardStats.wishlist.change} reserveProgressSlot icon={<Bookmark className="size-5 text-primary" />} />
-        <Separator orientation="vertical" className="hidden h-16 xl:block" />
-        <StatItem label="Collection value" value={dashboardStats.collectionValue.value} change={dashboardStats.collectionValue.change} reserveProgressSlot icon={<BadgeDollarSign className="size-5 text-primary" />} />
+        <StatItem
+          label="Wishlist"
+          value={stats.wishlist.value}
+          {...(stats.wishlist.change ? { change: stats.wishlist.change } : {})}
+          reserveProgressSlot
+          loading={loading}
+          icon={<Bookmark className="size-5 text-primary" />}
+        />
       </div>
     </section>
   );

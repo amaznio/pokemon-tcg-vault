@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Route } from 'next';
-import type { RecentCardItem } from '@/lib/dashboard/mock-dashboard-data';
+import type { RecentCardItem } from '@/lib/dashboard/types';
 
 export function RecentCardList({
   items,

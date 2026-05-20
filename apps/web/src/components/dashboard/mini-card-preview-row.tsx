@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import type { MiniCardItem } from '@/lib/dashboard/mock-dashboard-data';
+import type { MiniCardItem } from '@/lib/dashboard/types';
 import { MiniCardPreview } from '@/components/dashboard/mini-card-preview';
 import { ScrollArea } from '@/components/ui/scroll-area';
 

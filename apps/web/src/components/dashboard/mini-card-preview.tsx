@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Heart, Bookmark } from 'lucide-react';
-import type { MiniCardItem } from '@/lib/dashboard/mock-dashboard-data';
+import type { MiniCardItem } from '@/lib/dashboard/types';
 import { cn } from '@/lib/utils';
 import { homeTypography } from '@/components/dashboard/home-styles';
 

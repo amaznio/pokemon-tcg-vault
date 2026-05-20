@@ -142,6 +142,8 @@ export function CardFilters({
   onPageSizeChange,
   useLargeImages,
   onUseLargeImagesChange,
+  layoutMode,
+  onLayoutModeChange,
 }: {
   value: DiscoveryFilters;
   onChange: (next: DiscoveryFilters) => void;
@@ -150,6 +152,8 @@ export function CardFilters({
   onPageSizeChange: (next: number) => void;
   useLargeImages: boolean;
   onUseLargeImagesChange: (next: boolean) => void;
+  layoutMode: 'grid' | 'list';
+  onLayoutModeChange: (next: 'grid' | 'list') => void;
 }) {
   const selectedSetLabel = setOptions.find((option) => option.value === value.set)?.label;
 
@@ -222,19 +226,6 @@ export function CardFilters({
         </Drawer>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Tabs
-          value={value.scope}
-          onValueChange={(scope) =>
-            onChange({ ...value, scope: (scope as DiscoveryFilters['scope']) ?? 'all' })
-          }
-        >
-          <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="favorites">Favorites</TabsTrigger>
-            <TabsTrigger value="owned">Owned</TabsTrigger>
-            <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
-          </TabsList>
-        </Tabs>
         <div className="flex items-center gap-2">
           <FilterSelect
             value={value.sort}
@@ -264,13 +255,21 @@ export function CardFilters({
           </Select>
           <Button
             variant={useLargeImages ? 'default' : 'outline'}
-            className="h-10 rounded-xl px-3"
+            className="h-8 min-w-24 rounded-xl border-border px-4"
             onClick={() => onUseLargeImagesChange(!useLargeImages)}
           >
             {useLargeImages ? 'Large' : 'Small'}
           </Button>
-          <Button variant="outline" size="icon" className="rounded-xl border-border"><LayoutGrid className="h-4 w-4" /></Button>
-          <Button variant="outline" size="icon" className="rounded-xl border-border"><List className="h-4 w-4" /></Button>
+          <Tabs value={layoutMode} onValueChange={(next) => onLayoutModeChange(next as 'grid' | 'list')}>
+            <TabsList className="h-10 rounded-xl border border-border bg-background p-1">
+              <TabsTrigger value="grid" className="h-full min-w-9 rounded-lg px-2" aria-label="Grid layout">
+                <LayoutGrid className="h-4 w-4" />
+              </TabsTrigger>
+              <TabsTrigger value="list" className="h-full min-w-9 rounded-lg px-2" aria-label="List layout">
+                <List className="h-4 w-4" />
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </div>
     </section>

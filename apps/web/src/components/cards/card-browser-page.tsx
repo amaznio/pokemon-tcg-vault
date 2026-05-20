@@ -61,6 +61,7 @@ export function CardBrowserPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [useLargeImages, setUseLargeImages] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
   const gridTopRef = useRef<HTMLDivElement | null>(null);
   const state = useLocalCardState();
 
@@ -136,6 +137,8 @@ export function CardBrowserPage() {
         }}
         useLargeImages={useLargeImages}
         onUseLargeImagesChange={setUseLargeImages}
+        layoutMode={layoutMode}
+        onLayoutModeChange={setLayoutMode}
       />
       <div ref={gridTopRef} />
       <div className="my-5 text-sm text-muted-foreground">
