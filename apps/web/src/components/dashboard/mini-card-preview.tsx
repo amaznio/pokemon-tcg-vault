@@ -42,10 +42,9 @@ export function MiniCardPreview({
           <Icon className="size-4" />
         </span>
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         <p className={cn('truncate leading-tight', homeTypography.tileTitle)}>{item.name}</p>
-        <p className={cn('truncate', homeTypography.body)}>{item.setName}</p>
-        <p className={cn('truncate', homeTypography.body)}>• {item.number}</p>
+        <p className={cn('truncate', homeTypography.body)}>{item.setName} • {item.number}</p>
       </div>
     </Link>
   );

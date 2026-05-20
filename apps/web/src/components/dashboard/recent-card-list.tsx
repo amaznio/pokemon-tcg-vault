@@ -1,29 +1,36 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import type { RecentCardItem } from '@/lib/dashboard/mock-dashboard-data';
-import { homeTypography } from '@/components/dashboard/home-styles';
 
-export function RecentCardList({ items }: { items: RecentCardItem[] }) {
+export function RecentCardList({
+  items,
+  maxItems,
+}: {
+  items: RecentCardItem[];
+  maxItems?: number;
+}) {
+  const visibleItems = typeof maxItems === 'number' ? items.slice(0, maxItems) : items;
+
   return (
-    <div className="flex flex-col gap-4">
-      {items.map((item) => (
+    <div className="flex flex-col gap-2 md:gap-4">
+      {visibleItems.map((item) => (
         <Link
           key={item.id}
           href={`/cards/${item.id}` as Route}
-          className="flex items-center gap-3 rounded-xl p-2 hover:bg-muted/70"
+          className="flex h-[84px] items-center gap-3 rounded-lg p-2 hover:bg-muted/70"
         >
           <img
             src={item.image}
             alt={item.name}
-            className="h-[54px] w-[39px] rounded-md object-contain"
+            className="h-[72px] w-[52px] rounded-sm object-contain"
           />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold leading-tight">{item.name}</p>
-            <p className={homeTypography.body}>
+            <p className="truncate text-sm text-muted-foreground leading-relaxed">
               {item.setName} • {item.number}
             </p>
           </div>
-          <p className={homeTypography.meta}>{item.viewedAtLabel}</p>
+          <p className="shrink-0 text-xs text-muted-foreground">{item.viewedAtLabel}</p>
         </Link>
       ))}
     </div>

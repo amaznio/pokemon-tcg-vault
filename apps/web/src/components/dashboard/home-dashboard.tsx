@@ -39,7 +39,7 @@ export function HomeDashboard() {
             />
           }
         >
-          <RecentCardList items={recentCards} />
+          <RecentCardList items={recentCards} maxItems={3} />
         </DashboardSection>
 
         <DashboardSection
