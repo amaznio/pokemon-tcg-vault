@@ -3,6 +3,7 @@
 > next build
 
    ▲ Next.js 15.1.6
+   - Environments: .env
    - Experiments (use with caution):
      · typedRoutes
 
@@ -10,27 +11,19 @@
  ✓ Compiled successfully
    Linting and checking validity of types ...
    Collecting page data ...
-   Generating static pages (0/6) ...
-   Generating static pages (1/6) 
-   Generating static pages (2/6) 
-   Generating static pages (4/6) 
- ✓ Generating static pages (6/6)
-   Finalizing page optimization ...
-   Collecting build traces ...
-
-Route (app)                              Size     First Load JS
-┌ ○ /                                    1.1 kB          119 kB
-├ ○ /_not-found                          980 B           106 kB
-├ ƒ /cards/[id]                          1.56 kB         116 kB
-├ ○ /collection                          1.19 kB         107 kB
-├ ○ /sets                                1.02 kB         119 kB
-└ ƒ /sets/[id]                           823 B           115 kB
-+ First Load JS shared by all            105 kB
-  ├ chunks/0f77e470-3c8cfaf8b733b022.js  52.9 kB
-  ├ chunks/659-7553835f3b12c9d4.js       50.5 kB
-  └ other shared chunks (total)          1.98 kB
-
-
-○  (Static)   prerendered as static content
-ƒ  (Dynamic)  server-rendered on demand
-
+   Generating static pages (0/9) ...
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/404". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at i (C:\Users\adria\Desktop\Coding\pokemon-tcg\apps\web\.next\server\chunks\90.js:1:6603)
+    at d (C:\Users\adria\Desktop\Coding\pokemon-tcg\apps\web\.next\server\chunks\90.js:1:23185)
+    at N (C:\Users\adria\Desktop\Coding\pokemon-tcg\apps\web\.next\server\chunks\197.js:1:2866)
+    at nO (C:\Users\adria\Desktop\Coding\pokemon-tcg\node_modules\.pnpm\next@15.1.6_@babel+core@7.2_2967cdc62e3eab75ce8fe8539c06ee2b\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:45959)
+    at nI (C:\Users\adria\Desktop\Coding\pokemon-tcg\node_modules\.pnpm\next@15.1.6_@babel+core@7.2_2967cdc62e3eab75ce8fe8539c06ee2b\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:47734)
+    at nI (C:\Users\adria\Desktop\Coding\pokemon-tcg\node_modules\.pnpm\next@15.1.6_@babel+core@7.2_2967cdc62e3eab75ce8fe8539c06ee2b\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:62515)
+    at nL (C:\Users\adria\Desktop\Coding\pokemon-tcg\node_modules\.pnpm\next@15.1.6_@babel+core@7.2_2967cdc62e3eab75ce8fe8539c06ee2b\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:65533)
+    at nN (C:\Users\adria\Desktop\Coding\pokemon-tcg\node_modules\.pnpm\next@15.1.6_@babel+core@7.2_2967cdc62e3eab75ce8fe8539c06ee2b\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:63164)
+    at nB (C:\Users\adria\Desktop\Coding\pokemon-tcg\node_modules\.pnpm\next@15.1.6_@babel+core@7.2_2967cdc62e3eab75ce8fe8539c06ee2b\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:68946)
+    at nD (C:\Users\adria\Desktop\Coding\pokemon-tcg\node_modules\.pnpm\next@15.1.6_@babel+core@7.2_2967cdc62e3eab75ce8fe8539c06ee2b\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:20:67647)
+Error occurred prerendering page "/_not-found". Read more: https://nextjs.org/docs/messages/prerender-error
+Export encountered an error on /_not-found/page: /_not-found, exiting the build.
+ ⨯ Static worker exited with code: 1 and signal: null
+ ELIFECYCLE  Command failed with exit code 1.

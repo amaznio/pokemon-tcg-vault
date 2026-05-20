@@ -40,7 +40,7 @@ export function TopNav() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/95 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-6 py-3 md:px-8">
         <MobileNav />
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <span className="grid size-8 place-items-center rounded-full bg-primary/10 text-primary">
@@ -107,7 +107,7 @@ export function TopNav() {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-7xl px-4 pb-3 sm:px-6 lg:hidden">
+      <div className="mx-auto w-full max-w-7xl px-6 pb-3 md:px-8 lg:hidden">
         <form
           onSubmit={(event) => {
             event.preventDefault();

@@ -7,6 +7,7 @@ import { MiniCardPreviewRow } from '@/components/dashboard/mini-card-preview-row
 import { SectionActionLink } from '@/components/dashboard/section-action-link';
 import { StatStrip } from '@/components/dashboard/stat-strip';
 import { APP_ROUTES } from '@/lib/routes';
+import { homeSpacing } from '@/components/dashboard/home-styles';
 import {
   favoriteCards,
   quickActions,
@@ -16,16 +17,16 @@ import {
 
 export function HomeDashboard() {
   return (
-    <div className="space-y-6">
+    <div className={homeSpacing.pageStack}>
       <HeroBanner />
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {quickActions.map((item) => (
           <QuickActionTile key={item.title} item={item} />
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-3">
+      <section className="grid gap-6 xl:grid-cols-3">
         <DashboardSection
           title="Recently viewed"
           icon={<Clock3 className="size-5 text-muted-foreground" />}

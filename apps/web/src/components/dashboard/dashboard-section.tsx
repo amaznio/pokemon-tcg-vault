@@ -1,4 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SectionHeading } from '@/components/shared/section-heading';
+import { cn } from '@/lib/utils';
+import { homeSpacing, homeTypography } from '@/components/dashboard/home-styles';
 
 export function DashboardSection({
   title,
@@ -14,18 +16,22 @@ export function DashboardSection({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="flex h-full flex-col rounded-xl border-border/80 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-5 py-0">
-        <CardTitle className="flex items-center gap-2 text-lg">
+    <section className="flex h-full flex-col rounded-2xl border border-border/70 bg-card p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
           {icon}
-          {title}
-        </CardTitle>
+          <SectionHeading
+            title={title}
+            className="space-y-0"
+            titleClassName={cn(homeTypography.sectionTitle)}
+          />
+        </div>
         {action}
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col px-5 py-0">
+      </div>
+      <div className={cn('mt-6 flex flex-1 flex-col', homeSpacing.sectionStack)}>
         <div className="flex-1">{children}</div>
-        {bottomAction ? <div className="pt-4">{bottomAction}</div> : null}
-      </CardContent>
-    </Card>
+        {bottomAction}
+      </div>
+    </section>
   );
 }

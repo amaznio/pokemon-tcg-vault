@@ -17,7 +17,7 @@ export function SectionActionLink({
 }) {
   if (plain) {
     return (
-      <Link href={href} className="text-sm font-semibold text-primary hover:underline">
+      <Link href={href} className="text-sm font-medium text-primary hover:underline">
         {label}
       </Link>
     );
