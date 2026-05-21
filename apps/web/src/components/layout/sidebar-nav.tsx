@@ -24,6 +24,8 @@ const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/cards', label: 'Cards', icon: Grid3X3 },
   { href: '/sets', label: 'Sets', icon: Package },
+  { href: '/linkage', label: 'Linkage', icon: Search },
+  { href: '/linkage/products', label: 'CM Products', icon: Search },
   { href: '/favorites', label: 'Favorites', icon: Heart },
   { href: '/collection', label: 'Collection', icon: Library },
   { href: '/wishlist', label: 'Wishlist', icon: Sparkles },

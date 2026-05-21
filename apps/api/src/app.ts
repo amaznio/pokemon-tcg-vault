@@ -7,7 +7,10 @@ import { PokemonTcgApiError } from './infrastructure/pokemon-client';
 import { registerRoutes } from './routes';
 
 export const createApp = () => {
-  const app = Fastify({ logger: { level: env.NODE_ENV === 'development' ? 'info' : 'warn' } });
+  const app = Fastify({
+    logger: { level: env.NODE_ENV === 'development' ? 'info' : 'warn' },
+    bodyLimit: 50 * 1024 * 1024,
+  });
 
   app.register(sensible);
   app.register(cors, {

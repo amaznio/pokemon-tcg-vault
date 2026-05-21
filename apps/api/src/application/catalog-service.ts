@@ -4,6 +4,7 @@ import { createQueryHash } from '../infrastructure/hash';
 import { PokemonTcgHttpClient } from '../infrastructure/pokemon-client';
 import { prisma } from '../infrastructure/prisma';
 import { isFresh, mapCardUpsertInput, mapSetUpsertInput } from '../domain/cache';
+import { cardmarketEnrichmentService } from './cardmarket-enrichment-service';
 
 type CardsApiResponse = { data: any[]; count: number; totalCount: number; page: number; pageSize: number };
 type CardApiResponse = { data: any };
@@ -38,10 +39,11 @@ const normalizeSetsQuery = (query: string): string => {
 };
 
 export class CatalogService {
-  async getCardById(id: string): Promise<{ card: Card; stale?: boolean }> {
+  async getCardById(id: string): Promise<{ card: Card; stale?: boolean; cardmarket: Awaited<ReturnType<typeof cardmarketEnrichmentService.getCardmarketDetail>> }> {
     const cached = await prisma.card.findUnique({ where: { id } });
     if (cached && isFresh(cached.expiresAt)) {
-      return { card: cached };
+      const cardmarket = await cardmarketEnrichmentService.getCardmarketDetail(cached);
+      return { card: cached, cardmarket };
     }
 
     try {
@@ -52,10 +54,12 @@ export class CatalogService {
         create: mapped,
         update: mapped,
       });
-      return { card };
+      const cardmarket = await cardmarketEnrichmentService.getCardmarketDetail(card);
+      return { card, cardmarket };
     } catch (error) {
       if (cached) {
-        return { card: cached, stale: true };
+        const cardmarket = await cardmarketEnrichmentService.getCardmarketDetail(cached);
+        return { card: cached, stale: true, cardmarket };
       }
       throw error;
     }

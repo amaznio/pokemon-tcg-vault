@@ -24,6 +24,7 @@ model Card {
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  cardLinks  CardLink[]
 }
 
 model Set {
@@ -73,4 +74,171 @@ model SetSearchCache {
   updatedAt  DateTime @updatedAt
 
   @@index([expiresAt])
+}
+
+enum CardLinkStatus {
+  auto_linked
+  needs_review
+  unlinked
+  rejected
+}
+
+enum CardLinkConfidenceBand {
+  high
+  medium
+  low
+}
+
+enum CardmarketEnrichmentStatus {
+  pending
+  success
+  failed
+  rate_limited
+  forbidden
+}
+
+enum CardmarketSetMappingConfidence {
+  low
+  medium
+  high
+}
+
+model CardmarketProduct {
+  idProduct              Int                       @id
+  name                   String
+  idCategory             Int?
+  categoryName           String?
+  idExpansion            Int?
+  idMetacard             Int?
+  dateAdded              String?
+  raw                    Json
+  finalUrl               String?
+  setSlug                String?
+  cardSlug               String?
+  parsedSetCode          String?
+  parsedCollectorNumber  String?
+  enrichedAt             DateTime?
+  enrichmentStatus       CardmarketEnrichmentStatus?
+  enrichmentError        String?
+  enrichmentAttempts     Int                       @default(0)
+  nextRetryAt            DateTime?
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
+  priceGuide             CardmarketPriceGuide?
+  priceGuideSnapshots    CardmarketPriceGuideSnapshot[]
+  link                   CardLink?
+
+  @@index([name])
+  @@index([idExpansion])
+  @@index([enrichmentStatus])
+  @@index([nextRetryAt])
+  @@index([parsedSetCode])
+  @@index([parsedCollectorNumber])
+}
+
+model CardmarketPriceGuide {
+  idProduct  Int               @id
+  idCategory Int?
+  avg        Float?
+  low        Float?
+  trend      Float?
+  avg1       Float?
+  avg7       Float?
+  avg30      Float?
+  avgHolo    Float?
+  lowHolo    Float?
+  trendHolo  Float?
+  avg1Holo   Float?
+  avg7Holo   Float?
+  avg30Holo  Float?
+  raw        Json
+  updatedAt  DateTime          @updatedAt
+  product   CardmarketProduct @relation(fields: [idProduct], references: [idProduct], onDelete: Cascade)
+
+  @@index([idCategory])
+}
+
+model CardmarketPriceGuideSnapshot {
+  id           String            @id @default(cuid())
+  idProduct    Int
+  snapshotDate DateTime
+  idCategory   Int?
+  avg          Float?
+  low          Float?
+  trend        Float?
+  avg1         Float?
+  avg7         Float?
+  avg30        Float?
+  avgHolo      Float?
+  lowHolo      Float?
+  trendHolo    Float?
+  avg1Holo     Float?
+  avg7Holo     Float?
+  avg30Holo    Float?
+  raw          Json
+  createdAt    DateTime          @default(now())
+  product      CardmarketProduct @relation(fields: [idProduct], references: [idProduct], onDelete: Cascade)
+
+  @@unique([idProduct, snapshotDate])
+  @@index([idProduct, snapshotDate])
+}
+
+model CardmarketPriceGuideImport {
+  id              String   @id @default(cuid())
+  sourceCreatedAt DateTime @unique
+  importedAt      DateTime @default(now())
+  guideCount      Int
+}
+
+model CardLink {
+  id              String                 @id @default(cuid())
+  idProduct       Int                    @unique
+  cardId          String?
+  status          CardLinkStatus
+  score           Float?
+  matchMethod     String?
+  confidenceBand  CardLinkConfidenceBand?
+  reviewedAt      DateTime?
+  provenance      String
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  product         CardmarketProduct      @relation(fields: [idProduct], references: [idProduct], onDelete: Cascade)
+  card            Card?                  @relation(fields: [cardId], references: [id], onDelete: SetNull)
+  history         CardLinkHistory[]
+
+  @@index([status])
+  @@index([confidenceBand])
+  @@index([cardId])
+}
+
+model CardLinkHistory {
+  id         String   @id @default(cuid())
+  cardLinkId String
+  action     String
+  payload    Json?
+  createdAt  DateTime @default(now())
+  cardLink   CardLink @relation(fields: [cardLinkId], references: [id], onDelete: Cascade)
+
+  @@index([cardLinkId])
+}
+
+model CardmarketSetMapping {
+  id                String                         @id @default(cuid())
+  ourSetId          String                         @unique
+  cardmarketSetCode String?
+  cardmarketSetSlug String?
+  cardmarketIdExpansion Int?
+  confidence        CardmarketSetMappingConfidence @default(low)
+  evidenceCount     Int                            @default(0)
+  conflictCount     Int                            @default(0)
+  lastScore         Float?
+  lastMatchedCardId String?
+  source            String                         @default("derived_auto")
+  createdAt         DateTime                       @default(now())
+  updatedAt         DateTime                       @updatedAt
+
+  @@index([cardmarketSetCode])
+  @@index([cardmarketSetSlug])
+  @@index([cardmarketIdExpansion])
+  @@index([confidence])
 }

@@ -1,6 +1,6 @@
 const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.API_BASE_URL ?? 'http://localhost:4000';
 
-export async function apiFetch<T>(path: string): Promise<T> {
+function resolveBaseUrl() {
   const resolvedBase = (() => {
     if (typeof window === 'undefined') return apiBase;
     try {
@@ -18,9 +18,24 @@ export async function apiFetch<T>(path: string): Promise<T> {
     }
   })();
 
-  const response = await fetch(`${resolvedBase}${path}`);
+  return resolvedBase;
+}
+
+export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const hasBody = init?.body !== undefined && init?.body !== null;
+  const response = await fetch(`${resolveBaseUrl()}${path}`, {
+    ...init,
+    headers: {
+      ...(hasBody ? { 'content-type': 'application/json' } : {}),
+      ...(init?.headers ?? {}),
+    },
+  });
   if (!response.ok) {
     throw new Error(`API error: ${response.status}`);
   }
   return (await response.json()) as T;
+}
+
+export async function apiFetch<T>(path: string): Promise<T> {
+  return apiRequest<T>(path);
 }

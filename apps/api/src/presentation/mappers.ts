@@ -16,9 +16,13 @@ export const toCardSummary = (card: Card): CardSummary => ({
   updatedAt: card.updatedAt.toISOString(),
 });
 
-export const toCardDetail = (card: Card): CardDetail => ({
+export const toCardDetail = (
+  card: Card,
+  cardmarket?: CardDetail['cardmarket'],
+): CardDetail => ({
   ...toCardSummary(card),
   raw: card.raw,
+  ...(cardmarket ? { cardmarket } : {}),
 });
 
 export const toSetSummary = (set: Set): SetSummary => ({
