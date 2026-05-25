@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { catalogService } from '../application/catalog-service';
 import { linkageService } from '../application/linkage-service';
+import { enqueueOrRunCardmarketEnrichment, resetCardmarketEnrichment } from '../features/cardmarket/cardmarket-enrichment.service';
+import { env } from '../infrastructure/env';
 import { paginated, toCardDetail, toCardSummary, toSetDetail, toSetSummary } from '../presentation/mappers';
 import {
   cardsQuerySchema,
@@ -66,10 +68,33 @@ export const registerRoutes = (app: FastifyInstance): void => {
         mappingProductId: result.cardmarket.mapping?.idProduct ?? null,
         mappingStatus: result.cardmarket.mapping?.status ?? null,
         hasPriceGuide: Boolean(result.cardmarket.priceGuide),
+        firecrawlStatus: result.firecrawlEnrichment.status,
       },
       'GET /api/cards/:id cardmarket enrichment result',
     );
-    return { data: toCardDetail(result.card, result.cardmarket), stale: result.stale };
+    return {
+      data: toCardDetail(result.card, {
+        ...result.cardmarket,
+        firecrawlEnrichment: result.firecrawlEnrichment,
+      }),
+      stale: result.stale,
+    };
+  });
+
+  app.post('/api/admin/cards/:id/cardmarket/enrich', async (request, reply) => {
+    // TODO: Replace this with real auth/admin middleware before enabling in production.
+    if (env.NODE_ENV === 'production') return reply.status(403).send({ message: 'Disabled in production.' });
+    const id = (request.params as { id: string }).id;
+    await enqueueOrRunCardmarketEnrichment(id);
+    return { ok: true, cardId: id };
+  });
+
+  app.post('/api/admin/cards/:id/cardmarket/reset', async (request, reply) => {
+    // TODO: Replace this with real auth/admin middleware before enabling in production.
+    if (env.NODE_ENV === 'production') return reply.status(403).send({ message: 'Disabled in production.' });
+    const id = (request.params as { id: string }).id;
+    await resetCardmarketEnrichment(id);
+    return { ok: true, cardId: id };
   });
 
   app.get('/api/sets', async (request) => {

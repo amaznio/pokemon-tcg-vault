@@ -40,6 +40,11 @@ const envSchema = z.object({
   CARDMARKET_ENRICHMENT_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(1800),
   CARDMARKET_ENRICHMENT_REDIRECT_LIMIT: z.coerce.number().int().positive().default(5),
   CARDMARKET_ENRICHMENT_COOLDOWN_MINUTES: z.coerce.number().int().positive().default(30),
+  CARDMARKET_ENRICHMENT_ENABLED: envBoolean(false),
+  FIRECRAWL_API_KEY: z.string().default(''),
+  CARDMARKET_ENRICHMENT_TTL_HOURS: z.coerce.number().int().positive().default(168),
+  CARDMARKET_ENRICHMENT_FAILURE_COOLDOWN_HOURS: z.coerce.number().int().positive().default(24),
+  CARDMARKET_ENRICHMENT_MAX_ATTEMPTS: z.coerce.number().int().positive().default(3),
 });
 
 export const env = envSchema.parse(process.env);

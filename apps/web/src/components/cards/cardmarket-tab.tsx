@@ -68,6 +68,12 @@ const formatDate = (value: string): string =>
 const formatDateTime = (value: string | null | undefined): string =>
   value ? new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : 'n/a';
 
+const formatCents = (cents: number | null | undefined, currency: string | null | undefined): string => {
+  if (typeof cents !== 'number' || !Number.isFinite(cents)) return 'n/a';
+  const code = currency && currency.trim().length === 3 ? currency : 'EUR';
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).format(cents / 100);
+};
+
 const toUtcDayStartTimestamp = (timestamp: number): number => {
   const date = new Date(timestamp);
   return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
@@ -572,6 +578,7 @@ function DataAndInsightPanel({ points, priceGuide }: { points: ChartPoint[]; pri
 
 export function CardmarketTab({ card }: { card: CardDetail }) {
   const cardmarket = card.cardmarket;
+  const firecrawl = cardmarket?.firecrawlEnrichment;
 
   if (cardmarket?.enrichmentState === 'matching') {
     return <p className="text-sm text-muted-foreground">Matching Cardmarket pricing...</p>;
@@ -586,7 +593,12 @@ export function CardmarketTab({ card }: { card: CardDetail }) {
   }
 
   if (cardmarket?.enrichmentState !== 'matched' || !cardmarket.mapping) {
-    return <p className="text-sm text-muted-foreground">{cardmarket?.statusMessage ?? 'Cardmarket matching is not available yet.'}</p>;
+    return (
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">{cardmarket?.statusMessage ?? 'Cardmarket matching is not available yet.'}</p>
+        {firecrawl ? <FirecrawlEnrichmentBlock enrichment={firecrawl} /> : null}
+      </div>
+    );
   }
 
   if (!cardmarket.priceGuide) {
@@ -602,6 +614,7 @@ export function CardmarketTab({ card }: { card: CardDetail }) {
 
   return (
     <div className="space-y-5">
+      {firecrawl ? <FirecrawlEnrichmentBlock enrichment={firecrawl} /> : null}
       <CardmarketHeader cardmarket={cardmarket} />
       <MarketKpiStrip priceGuide={cardmarket.priceGuide} points={points} />
       <PriceHistoryChart points={points} />
@@ -616,5 +629,36 @@ export function CardmarketTab({ card }: { card: CardDetail }) {
         <span>Last updated: {formatDateTime(cardmarket.priceGuide.updatedAt)}</span>
       </footer>
     </div>
+  );
+}
+
+function FirecrawlEnrichmentBlock({ enrichment }: { enrichment: NonNullable<NonNullable<CardDetail['cardmarket']>['firecrawlEnrichment']> }) {
+  if (enrichment.status === 'pending') {
+    return <p className="text-xs text-muted-foreground">Refreshing Cardmarket pricing in the background...</p>;
+  }
+
+  if (enrichment.status !== 'success') {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Cardmarket pricing unavailable.
+        {enrichment.updatedAt ? ` Last checked: ${formatDateTime(enrichment.updatedAt)}.` : ''}
+      </p>
+    );
+  }
+
+  return (
+    <section className="rounded-xl border border-border/70 bg-muted/20 p-3 text-xs">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <span>From: {formatCents(enrichment.fromPriceCents, enrichment.currency)}</span>
+        <span>Trend: {formatCents(enrichment.priceTrendCents, enrichment.currency)}</span>
+        <span>30D avg: {formatCents(enrichment.avgSellPrice30dCents, enrichment.currency)}</span>
+        <span>7D avg: {formatCents(enrichment.avgPrice7dCents, enrichment.currency)}</span>
+        <span>1D avg: {formatCents(enrichment.avgPrice1dCents, enrichment.currency)}</span>
+        <span>Items: {enrichment.availableItems ?? 'n/a'}</span>
+      </div>
+      <p className="mt-2 text-muted-foreground">
+        Cardmarket extraction last updated: {formatDateTime(enrichment.updatedAt)}.
+      </p>
+    </section>
   );
 }

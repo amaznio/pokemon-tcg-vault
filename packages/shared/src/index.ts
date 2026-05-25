@@ -56,6 +56,24 @@ export type CardDetail = CardSummary & {
       avg7Holo: number | null;
       avg30Holo: number | null;
     }>;
+    firecrawlEnrichment?: {
+      status: 'pending' | 'success' | 'failed' | 'blocked' | 'not_found' | 'disabled' | 'missing';
+      url: string | null;
+      productName: string | null;
+      cardNumber: string | null;
+      rarity: string | null;
+      printedInSet: string | null;
+      availableItems: number | null;
+      fromPriceCents: number | null;
+      priceTrendCents: number | null;
+      avgSellPrice30dCents: number | null;
+      avgPrice7dCents: number | null;
+      avgPrice1dCents: number | null;
+      currency: string | null;
+      attemptCount: number;
+      fetchedAt: string | null;
+      updatedAt: string | null;
+    };
   };
 };
 

@@ -16,6 +16,7 @@
   "dependencies": {
     "@fastify/cors": "^10.0.1",
     "@fastify/sensible": "^6.0.3",
+    "@mendable/firecrawl-js": "^4.24.2",
     "@prisma/client": "^5.22.0",
     "@repo/shared": "workspace:*",
     "dotenv": "^17.4.2",

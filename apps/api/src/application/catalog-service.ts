@@ -5,6 +5,7 @@ import { PokemonTcgHttpClient } from '../infrastructure/pokemon-client';
 import { prisma } from '../infrastructure/prisma';
 import { isFresh, mapCardUpsertInput, mapSetUpsertInput } from '../domain/cache';
 import { cardmarketEnrichmentService } from './cardmarket-enrichment-service';
+import { getCardmarketEnrichmentForCard } from '../features/cardmarket/cardmarket-enrichment.service';
 
 type CardsApiResponse = { data: any[]; count: number; totalCount: number; page: number; pageSize: number };
 type CardApiResponse = { data: any };
@@ -39,11 +40,14 @@ const normalizeSetsQuery = (query: string): string => {
 };
 
 export class CatalogService {
-  async getCardById(id: string): Promise<{ card: Card; stale?: boolean; cardmarket: Awaited<ReturnType<typeof cardmarketEnrichmentService.getCardmarketDetail>> }> {
+  async getCardById(
+    id: string,
+  ): Promise<{ card: Card; stale?: boolean; cardmarket: Awaited<ReturnType<typeof cardmarketEnrichmentService.getCardmarketDetail>>; firecrawlEnrichment: Awaited<ReturnType<typeof getCardmarketEnrichmentForCard>> }> {
     const cached = await prisma.card.findUnique({ where: { id } });
     if (cached && isFresh(cached.expiresAt)) {
       const cardmarket = await cardmarketEnrichmentService.getCardmarketDetail(cached);
-      return { card: cached, cardmarket };
+      const firecrawlEnrichment = await getCardmarketEnrichmentForCard(cached);
+      return { card: cached, cardmarket, firecrawlEnrichment };
     }
 
     try {
@@ -55,11 +59,13 @@ export class CatalogService {
         update: mapped,
       });
       const cardmarket = await cardmarketEnrichmentService.getCardmarketDetail(card);
-      return { card, cardmarket };
+      const firecrawlEnrichment = await getCardmarketEnrichmentForCard(card);
+      return { card, cardmarket, firecrawlEnrichment };
     } catch (error) {
       if (cached) {
         const cardmarket = await cardmarketEnrichmentService.getCardmarketDetail(cached);
-        return { card: cached, stale: true, cardmarket };
+        const firecrawlEnrichment = await getCardmarketEnrichmentForCard(cached);
+        return { card: cached, stale: true, cardmarket, firecrawlEnrichment };
       }
       throw error;
     }

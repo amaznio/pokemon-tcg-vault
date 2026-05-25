@@ -25,6 +25,7 @@ model Card {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   cardLinks  CardLink[]
+  cardmarketEnrichment CardMarketEnrichment?
 }
 
 model Set {
@@ -101,6 +102,44 @@ enum CardmarketSetMappingConfidence {
   low
   medium
   high
+}
+
+enum CardMarketEnrichmentStatus {
+  pending
+  success
+  failed
+  blocked
+  not_found
+  disabled
+}
+
+model CardMarketEnrichment {
+  id                   String                      @id @default(cuid())
+  cardId               String                      @unique
+  url                  String
+  productName          String?
+  cardNumber           String?
+  rarity               String?
+  printedInSet         String?
+  availableItems       Int?
+  fromPriceCents       Int?
+  priceTrendCents      Int?
+  avgSellPrice30dCents Int?
+  avgPrice7dCents      Int?
+  avgPrice1dCents      Int?
+  currency             String?
+  status               CardMarketEnrichmentStatus @default(pending)
+  attemptCount         Int                         @default(0)
+  lastFetchedAt        DateTime?
+  nextRetryAt          DateTime?
+  lastError            String?
+  rawExtractedJson     Json?
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  card                 Card                        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([nextRetryAt])
 }
 
 model CardmarketProduct {
