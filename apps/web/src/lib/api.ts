@@ -24,6 +24,7 @@ function resolveBaseUrl() {
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const hasBody = init?.body !== undefined && init?.body !== null;
   const response = await fetch(`${resolveBaseUrl()}${path}`, {
+    credentials: 'include',
     ...init,
     headers: {
       ...(hasBody ? { 'content-type': 'application/json' } : {}),

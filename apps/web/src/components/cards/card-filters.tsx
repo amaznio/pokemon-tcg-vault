@@ -144,6 +144,9 @@ export function CardFilters({
   onUseLargeImagesChange,
   layoutMode,
   onLayoutModeChange,
+  onApply,
+  onReset,
+  hasPendingChanges,
 }: {
   value: DiscoveryFilters;
   onChange: (next: DiscoveryFilters) => void;
@@ -154,6 +157,9 @@ export function CardFilters({
   onUseLargeImagesChange: (next: boolean) => void;
   layoutMode: 'grid' | 'list';
   onLayoutModeChange: (next: 'grid' | 'list') => void;
+  onApply: () => void;
+  onReset: () => void;
+  hasPendingChanges: boolean;
 }) {
   const selectedSetLabel = setOptions.find((option) => option.value === value.set)?.label;
 
@@ -226,7 +232,7 @@ export function CardFilters({
         </Drawer>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <FilterSelect
             value={value.sort}
             onValueChange={(sort) => onChange({ ...value, sort: sort ?? 'relevance' })}
@@ -270,6 +276,14 @@ export function CardFilters({
               </TabsTrigger>
             </TabsList>
           </Tabs>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="outline" className="h-10 rounded-xl border-border px-4" onClick={onReset}>
+            Reset
+          </Button>
+          <Button type="button" className="h-10 rounded-xl px-4" onClick={onApply} disabled={!hasPendingChanges}>
+            Apply
+          </Button>
         </div>
       </div>
     </section>

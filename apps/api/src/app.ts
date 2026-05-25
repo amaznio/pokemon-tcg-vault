@@ -15,6 +15,7 @@ export const createApp = () => {
   app.register(sensible);
   app.register(cors, {
     origin: env.NODE_ENV === 'development' ? true : env.WEB_ORIGIN,
+    credentials: true,
   });
 
   app.setErrorHandler((error, request, reply) => {
@@ -46,6 +47,14 @@ export const createApp = () => {
           rateLimit: error.rateLimit,
         },
       });
+    }
+
+    if (error instanceof Error && error.message.includes('not found')) {
+      return reply.status(404).send({ error: 'Not Found', message: error.message });
+    }
+
+    if (error instanceof Error && (error.message.includes('System collections') || error.message.includes('Only binders'))) {
+      return reply.status(400).send({ error: 'Bad Request', message: error.message });
     }
 
     request.log.error(error);

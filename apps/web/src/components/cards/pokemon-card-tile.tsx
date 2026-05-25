@@ -24,7 +24,7 @@ export function PokemonCardTile({
 
   return (
     <article
-      className="space-y-3 cursor-pointer transition hover:-translate-y-0.5"
+      className="flex h-full cursor-pointer flex-col gap-3 transition hover:-translate-y-0.5"
       onClick={() => router.push(href)}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -43,7 +43,7 @@ export function PokemonCardTile({
           <div className="grid h-72 place-items-center text-sm text-muted-foreground">No image</div>
         )}
       </div>
-      <div className="mx-auto w-full max-w-[280px] space-y-2 px-2.5 md:space-y-3 md:px-4">
+      <div className="mx-auto flex w-full max-w-[280px] flex-1 flex-col gap-2 px-2.5 md:gap-3 md:px-4">
         <div className="space-y-0.5">
           <p className="line-clamp-1 text-base font-semibold">{card.name}</p>
           <p className="text-sm text-muted-foreground">{card.setName} • #{card.id.split('-').at(-1) ?? '-'}</p>
@@ -51,7 +51,7 @@ export function PokemonCardTile({
         <div className="flex flex-wrap gap-1">
           {card.rarity ? <Badge variant="outline">{card.rarity}</Badge> : null}
         </div>
-        <div className="flex items-center justify-between">
+        <div className="mt-auto flex items-center justify-between">
           <CardActions state={actionState} />
           <Link
             href={href}

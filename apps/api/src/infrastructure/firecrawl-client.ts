@@ -1,7 +1,7 @@
 import { FirecrawlAppV1 } from '@mendable/firecrawl-js';
 import { z } from 'zod';
 import { env } from './env';
-import { cardmarketFirecrawlExtractSchema } from '../features/cardmarket/cardmarket.schema';
+import { firecrawlPriceExtractSchema } from '../features/pricing/pricing.schema';
 
 const firecrawlResponseSchema = z.object({
   success: z.boolean().optional(),
@@ -10,12 +10,12 @@ const firecrawlResponseSchema = z.object({
 });
 
 export type FirecrawlExtractResult =
-  | { ok: true; data: z.infer<typeof cardmarketFirecrawlExtractSchema>; raw: unknown }
+  | { ok: true; data: z.infer<typeof firecrawlPriceExtractSchema>; raw: unknown }
   | { ok: false; reason: 'disabled' | 'not_found' | 'blocked' | 'failed'; error: string };
 
 const buildClient = () => new FirecrawlAppV1({ apiKey: env.FIRECRAWL_API_KEY, apiUrl: 'https://api.firecrawl.dev' });
 
-export const extractCardmarketProductWithFirecrawl = async (
+export const extractCardPricingWithFirecrawl = async (
   url: string,
   timeoutMs: number,
 ): Promise<FirecrawlExtractResult> => {
@@ -27,8 +27,8 @@ export const extractCardmarketProductWithFirecrawl = async (
     const client = buildClient();
     const response = await client.extract([url], {
       prompt:
-        'Extract Pokemon Cardmarket product data from this page. Return product name, card number, rarity, printed in set, available items, from price, price trend, 30-day average price, 7-day average price, and 1-day average price. Preserve currency symbols in raw fields.',
-      schema: cardmarketFirecrawlExtractSchema,
+        'Extract Pokemon Cardmarket product pricing data from this page. Return product name, card number, rarity, printed in set, available items, from price, price trend, 30-day average price, 7-day average price, 1-day average price, and the canonical pricing URL. Preserve currency symbols in raw fields.',
+      schema: firecrawlPriceExtractSchema,
       scrapeOptions: {
         timeout: timeoutMs,
         onlyMainContent: true,
@@ -53,7 +53,7 @@ export const extractCardmarketProductWithFirecrawl = async (
       return { ok: false, reason: 'failed', error };
     }
 
-    const parsedData = cardmarketFirecrawlExtractSchema.safeParse(raw);
+    const parsedData = firecrawlPriceExtractSchema.safeParse(raw);
     if (!parsedData.success) {
       return { ok: false, reason: 'failed', error: `Schema validation failed: ${parsedData.error.message}` };
     }

@@ -1,37 +1,56 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import type { CardDetail } from '@repo/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { RefreshCw } from 'lucide-react';
+import { queryKeys, type CollectionKind } from '@repo/shared';
 import { CardGrid } from '@/components/cards/card-grid';
-import { useLocalCardState } from '@/hooks/use-local-card-state';
+import { useServerCollection } from '@/hooks/use-server-collection';
 import { pokemonApi } from '@/lib/pokemon/api';
 import { SectionHeading } from '@/components/shared/section-heading';
+import { Button } from '@/components/ui/button';
 
-function useCardsByIds(ids: string[]) {
-  return useQuery({
-    queryKey: ['cards.byIds', ...ids],
-    enabled: ids.length > 0,
-    queryFn: async () => {
-      const results = await Promise.all(ids.map((id) => pokemonApi.card(id).then((res) => res.data).catch(() => null)));
-      return results.filter((value): value is CardDetail => Boolean(value));
-    },
-  });
-}
+const modeMeta: Record<'favorites' | 'owned' | 'wishlist', { title: string; subtitle: string; kind: CollectionKind }> = {
+  favorites: { title: 'Favorites', subtitle: 'Cards you marked as favorites.', kind: 'favorites' },
+  owned: { title: 'Collection', subtitle: 'Cards you own in your collection.', kind: 'owned' },
+  wishlist: { title: 'Wishlist', subtitle: 'Cards you want to collect.', kind: 'wishlist' },
+};
 
 export function PersonalCardsPage({ mode }: { mode: 'favorites' | 'owned' | 'wishlist' }) {
-  const state = useLocalCardState();
-  const ids = mode === 'favorites' ? [...state.favoriteIds] : mode === 'owned' ? [...state.ownedIds] : [...state.wishlistIds];
-  const cardsQuery = useCardsByIds(ids);
-  const title = mode === 'favorites' ? 'Favorites' : mode === 'owned' ? 'Collection' : 'Wishlist';
-  const subtitle = mode === 'favorites' ? 'Cards you marked as favorites.' : mode === 'owned' ? 'Cards you own in your collection.' : 'Cards you want to collect.';
+  const queryClient = useQueryClient();
+  const state = useServerCollection();
+  const meta = modeMeta[mode];
+  const collectionId = state.collectionIds[meta.kind as 'favorites' | 'owned' | 'wishlist'];
+
+  const itemsQuery = useQuery({
+    queryKey: queryKeys.collections.items(collectionId ?? `missing-${mode}`),
+    enabled: Boolean(collectionId),
+    queryFn: () => pokemonApi.collectionItems(collectionId as string).then((response) => response.data),
+  });
+
+  const refreshMutation = useMutation({
+    mutationFn: () => pokemonApi.refreshCollectionPrices(collectionId as string),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.collections.items(collectionId as string) });
+    },
+  });
+
+  const cards = (itemsQuery.data ?? []).map((item) => item.card);
 
   return (
     <section className="space-y-4">
-      <SectionHeading title={title} subtitle={subtitle} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <SectionHeading title={meta.title} subtitle={meta.subtitle} />
+        {collectionId ? (
+          <Button variant="outline" className="rounded-xl" onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending || cards.length === 0}>
+            <RefreshCw />
+            Refresh prices
+          </Button>
+        ) : null}
+      </div>
       <CardGrid
-        cards={cardsQuery.data ?? []}
-        loading={cardsQuery.isLoading}
-        emptyMessage={`No cards in ${title.toLowerCase()} yet`}
+        cards={cards}
+        loading={itemsQuery.isLoading || state.isLoading}
+        emptyMessage={`No cards in ${meta.title.toLowerCase()} yet`}
         getActionState={(id) => ({
           isFavorite: state.isFavorite(id),
           isOwned: state.isOwned(id),

@@ -1,6 +1,6 @@
 'use client';
 import type { CardDetail } from '@repo/shared';
-import { Bookmark, ExternalLink, Heart, Library } from 'lucide-react';
+import { Bookmark, Heart, Library } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -26,9 +26,6 @@ type CardDetailViewProps = {
 
 type CardRawView = Record<string, unknown>;
 
-const getCardmarketProductUrl = (idProduct: number): string =>
-  `https://www.cardmarket.com/Pokemon/Products?idProduct=${idProduct}`;
-
 function CardImagePanel({ card }: { card: CardDetail }) {
   return (
     <div className="w-full md:sticky md:top-24 md:w-[340px] md:min-w-[340px] md:max-w-[340px] lg:w-[360px] lg:min-w-[360px] lg:max-w-[360px]">
@@ -48,23 +45,10 @@ function CardImagePanel({ card }: { card: CardDetail }) {
 }
 
 function CardDetailHeader({ card }: { card: CardDetail }) {
-  const mappedProductId = card.cardmarket?.mapping?.idProduct ?? null;
-
   return (
     <header className="space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{card.name}</h1>
-        {mappedProductId ? (
-          <a
-            href={getCardmarketProductUrl(mappedProductId)}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-9 items-center gap-1 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-          >
-            Cardmarket
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-        ) : null}
       </div>
       <div className="flex flex-wrap gap-2">
         {card.rarity ? <Badge>{card.rarity}</Badge> : null}
@@ -165,7 +149,7 @@ function CardDetailTabs({ card, raw, actions }: { card: CardDetail; raw: CardRaw
           <TabsTrigger className="h-full px-3" value="overview">Overview</TabsTrigger>
           <TabsTrigger className="h-full px-3" value="attacks">Attacks / Abilities</TabsTrigger>
           <TabsTrigger className="h-full px-3" value="set">Set info</TabsTrigger>
-          <TabsTrigger className="h-full px-3" value="pricing">Cardmarket</TabsTrigger>
+          <TabsTrigger className="h-full px-3" value="pricing">Pricing</TabsTrigger>
           <TabsTrigger className="h-full px-3" value="notes">Personal notes</TabsTrigger>
         </TabsList>
       </div>

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const cardmarketFirecrawlExtractSchema = z.object({
+export const firecrawlPriceExtractSchema = z.object({
   productName: z.string().optional().nullable(),
   cardNumber: z.string().optional().nullable(),
   rarity: z.string().optional().nullable(),
@@ -11,7 +11,7 @@ export const cardmarketFirecrawlExtractSchema = z.object({
   avgSellPrice30d: z.union([z.string(), z.number()]).optional().nullable(),
   avgPrice7d: z.union([z.string(), z.number()]).optional().nullable(),
   avgPrice1d: z.union([z.string(), z.number()]).optional().nullable(),
-  cardmarketUrl: z.string().optional().nullable(),
+  pricingUrl: z.string().optional().nullable(),
 });
 
-export type CardmarketFirecrawlExtract = z.infer<typeof cardmarketFirecrawlExtractSchema>;
+export type FirecrawlPriceExtract = z.infer<typeof firecrawlPriceExtractSchema>;

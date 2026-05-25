@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@repo/shared';
 import { pokemonApi } from '@/lib/pokemon/api';
-import { useLocalCardState } from '@/hooks/use-local-card-state';
+import { useServerCollection } from '@/hooks/use-server-collection';
 import { CardHero } from '@/components/cards/card-hero';
 import { CardFilters, type DiscoveryFilters } from '@/components/cards/card-filters';
 import { CardGrid } from '@/components/cards/card-grid';
@@ -56,32 +56,49 @@ export function CardBrowserPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const currentUrlQuery = searchParams.get('q') ?? '';
-  const [filters, setFilters] = useState(initialFilters);
+  const [draftFilters, setDraftFilters] = useState(initialFilters);
+  const [appliedFilters, setAppliedFilters] = useState(initialFilters);
   const [heroQuery, setHeroQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [draftPageSize, setDraftPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [useLargeImages, setUseLargeImages] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
   const gridTopRef = useRef<HTMLDivElement | null>(null);
-  const state = useLocalCardState();
+  const state = useServerCollection();
 
   useEffect(() => {
+    const next = { ...initialFilters, query: currentUrlQuery };
     setHeroQuery(currentUrlQuery);
-    setFilters((prev) => ({ ...prev, query: currentUrlQuery }));
+    setDraftFilters(next);
+    setAppliedFilters(next);
+    setDraftPageSize(DEFAULT_PAGE_SIZE);
+    setPageSize(DEFAULT_PAGE_SIZE);
     setPage(1);
   }, [currentUrlQuery]);
 
-  const orderBy = toOrderBy(filters.sort);
-  const apiQuery = useMemo(() => buildApiQuery(filters, filters.query), [filters]);
+  const orderBy = toOrderBy(appliedFilters.sort);
+  const apiQuery = useMemo(() => buildApiQuery(appliedFilters, appliedFilters.query), [appliedFilters]);
+  const hasPendingChanges = JSON.stringify(draftFilters) !== JSON.stringify(appliedFilters) || draftPageSize !== pageSize;
 
-  const commitHeroSearch = () => {
+  const applySearch = (nextFilters = { ...draftFilters, query: heroQuery }, nextPageSize = draftPageSize) => {
+    setDraftFilters(nextFilters);
+    setAppliedFilters(nextFilters);
+    setDraftPageSize(nextPageSize);
+    setPageSize(nextPageSize);
+    setPage(1);
     const params = new URLSearchParams(searchParams.toString());
-    const next = heroQuery.trim();
+    const next = nextFilters.query.trim();
     if (next) params.set('q', next);
     else params.delete('q');
     params.delete('page');
     const query = params.toString();
     router.push((`/cards${query ? `?${query}` : ''}`) as Route);
+  };
+
+  const resetFilters = () => {
+    setHeroQuery('');
+    applySearch(initialFilters, DEFAULT_PAGE_SIZE);
   };
 
   const cardsQuery = useQuery({
@@ -103,12 +120,12 @@ export function CardBrowserPage() {
   const cards = useMemo(
     () =>
       (cardsQuery.data?.data ?? []).filter((card) => {
-        if (filters.scope === 'favorites' && !state.isFavorite(card.id)) return false;
-        if (filters.scope === 'owned' && !state.isOwned(card.id)) return false;
-        if (filters.scope === 'wishlist' && !state.isWishlist(card.id)) return false;
+        if (appliedFilters.scope === 'favorites' && !state.isFavorite(card.id)) return false;
+        if (appliedFilters.scope === 'owned' && !state.isOwned(card.id)) return false;
+        if (appliedFilters.scope === 'wishlist' && !state.isWishlist(card.id)) return false;
         return true;
       }),
-    [cardsQuery.data?.data, filters.scope, state],
+    [cardsQuery.data?.data, appliedFilters.scope, state],
   );
 
   const handlePageChange = (nextPage: number) => {
@@ -120,25 +137,27 @@ export function CardBrowserPage() {
     <section>
       <CardHero
         query={heroQuery}
-        onQueryChange={setHeroQuery}
-        onSearch={commitHeroSearch}
+        onQueryChange={(query) => {
+          setHeroQuery(query);
+          setDraftFilters((prev) => ({ ...prev, query }));
+        }}
+        onSearch={() => applySearch()}
       />
       <CardFilters
-        value={filters}
-        onChange={(next) => {
-          setFilters(next);
-          setPage(1);
-        }}
+        value={draftFilters}
+        onChange={setDraftFilters}
         setOptions={setOptions}
-        pageSize={pageSize}
+        pageSize={draftPageSize}
         onPageSizeChange={(next) => {
-          setPageSize(next);
-          setPage(1);
+          setDraftPageSize(next);
         }}
         useLargeImages={useLargeImages}
         onUseLargeImagesChange={setUseLargeImages}
         layoutMode={layoutMode}
         onLayoutModeChange={setLayoutMode}
+        onApply={() => applySearch(draftFilters)}
+        onReset={resetFilters}
+        hasPendingChanges={hasPendingChanges}
       />
       <div ref={gridTopRef} />
       <div className="my-5 text-sm text-muted-foreground">

@@ -4,8 +4,6 @@ import { createQueryHash } from '../infrastructure/hash';
 import { PokemonTcgHttpClient } from '../infrastructure/pokemon-client';
 import { prisma } from '../infrastructure/prisma';
 import { isFresh, mapCardUpsertInput, mapSetUpsertInput } from '../domain/cache';
-import { cardmarketEnrichmentService } from './cardmarket-enrichment-service';
-import { getCardmarketEnrichmentForCard } from '../features/cardmarket/cardmarket-enrichment.service';
 
 type CardsApiResponse = { data: any[]; count: number; totalCount: number; page: number; pageSize: number };
 type CardApiResponse = { data: any };
@@ -40,14 +38,10 @@ const normalizeSetsQuery = (query: string): string => {
 };
 
 export class CatalogService {
-  async getCardById(
-    id: string,
-  ): Promise<{ card: Card; stale?: boolean; cardmarket: Awaited<ReturnType<typeof cardmarketEnrichmentService.getCardmarketDetail>>; firecrawlEnrichment: Awaited<ReturnType<typeof getCardmarketEnrichmentForCard>> }> {
+  async getCardById(id: string): Promise<{ card: Card; stale?: boolean }> {
     const cached = await prisma.card.findUnique({ where: { id } });
     if (cached && isFresh(cached.expiresAt)) {
-      const cardmarket = await cardmarketEnrichmentService.getCardmarketDetail(cached);
-      const firecrawlEnrichment = await getCardmarketEnrichmentForCard(cached);
-      return { card: cached, cardmarket, firecrawlEnrichment };
+      return { card: cached };
     }
 
     try {
@@ -58,17 +52,37 @@ export class CatalogService {
         create: mapped,
         update: mapped,
       });
-      const cardmarket = await cardmarketEnrichmentService.getCardmarketDetail(card);
-      const firecrawlEnrichment = await getCardmarketEnrichmentForCard(card);
-      return { card, cardmarket, firecrawlEnrichment };
+      return { card };
     } catch (error) {
       if (cached) {
-        const cardmarket = await cardmarketEnrichmentService.getCardmarketDetail(cached);
-        const firecrawlEnrichment = await getCardmarketEnrichmentForCard(cached);
-        return { card: cached, stale: true, cardmarket, firecrawlEnrichment };
+        return { card: cached, stale: true };
       }
       throw error;
     }
+  }
+
+  async ensureCardById(id: string): Promise<Card> {
+    const result = await this.getCardById(id);
+    return result.card;
+  }
+
+  async getCardsByIds(ids: string[]): Promise<Card[]> {
+    const uniqueIds = [...new Set(ids.filter(Boolean))];
+    if (!uniqueIds.length) return [];
+
+    const cached = await prisma.card.findMany({ where: { id: { in: uniqueIds } } });
+    const freshIds = new Set(cached.filter((card) => isFresh(card.expiresAt)).map((card) => card.id));
+    const missingOrStaleIds = uniqueIds.filter((id) => !freshIds.has(id));
+
+    const refreshed = await Promise.all(
+      missingOrStaleIds.map((id) => this.getCardById(id).then((result) => result.card).catch(() => null)),
+    );
+    const byId = new Map<string, Card>();
+    for (const card of cached) byId.set(card.id, card);
+    for (const card of refreshed) {
+      if (card) byId.set(card.id, card);
+    }
+    return uniqueIds.map((id) => byId.get(id)).filter(Boolean) as Card[];
   }
 
   async getSetById(id: string): Promise<{ set: Set; stale?: boolean }> {
@@ -249,6 +263,7 @@ export class CatalogService {
             query: normalizedQuery,
             page,
             pageSize,
+            orderBy: effectiveOrderBy,
             setIds,
             count: payload.count,
             totalCount: payload.totalCount,
@@ -259,6 +274,7 @@ export class CatalogService {
             query: normalizedQuery,
             page,
             pageSize,
+            orderBy: effectiveOrderBy,
             setIds,
             count: payload.count,
             totalCount: payload.totalCount,

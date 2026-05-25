@@ -15,66 +15,6 @@ export type CardSummary = {
 
 export type CardDetail = CardSummary & {
   raw: unknown;
-  cardmarket?: {
-    enrichmentState: 'idle' | 'matching' | 'matched' | 'unresolved' | 'error';
-    statusMessage?: string;
-    mapping: {
-      idProduct: number;
-      status: LinkageStatus;
-      score: number | null;
-      confidenceBand: LinkageConfidenceBand | null;
-      matchMethod: string | null;
-      finalUrl: string | null;
-    } | null;
-    priceGuide: {
-      avg: number | null;
-      low: number | null;
-      trend: number | null;
-      avg1: number | null;
-      avg7: number | null;
-      avg30: number | null;
-      avgHolo: number | null;
-      lowHolo: number | null;
-      trendHolo: number | null;
-      avg1Holo: number | null;
-      avg7Holo: number | null;
-      avg30Holo: number | null;
-      updatedAt: string | null;
-    } | null;
-    priceHistory: Array<{
-      snapshotDate: string;
-      avg: number | null;
-      low: number | null;
-      trend: number | null;
-      avg1: number | null;
-      avg7: number | null;
-      avg30: number | null;
-      avgHolo: number | null;
-      lowHolo: number | null;
-      trendHolo: number | null;
-      avg1Holo: number | null;
-      avg7Holo: number | null;
-      avg30Holo: number | null;
-    }>;
-    firecrawlEnrichment?: {
-      status: 'pending' | 'success' | 'failed' | 'blocked' | 'not_found' | 'disabled' | 'missing';
-      url: string | null;
-      productName: string | null;
-      cardNumber: string | null;
-      rarity: string | null;
-      printedInSet: string | null;
-      availableItems: number | null;
-      fromPriceCents: number | null;
-      priceTrendCents: number | null;
-      avgSellPrice30dCents: number | null;
-      avgPrice7dCents: number | null;
-      avgPrice1dCents: number | null;
-      currency: string | null;
-      attemptCount: number;
-      fetchedAt: string | null;
-      updatedAt: string | null;
-    };
-  };
 };
 
 export type SetSummary = {
@@ -102,234 +42,113 @@ export type PaginatedResponse<T> = {
   stale?: boolean;
 };
 
-export type LinkageStatus = 'auto_linked' | 'needs_review' | 'unlinked' | 'rejected';
-export type LinkageConfidenceBand = 'high' | 'medium' | 'low';
-
-export type LinkageSummary = {
-  total: number;
-  status: Record<LinkageStatus, number>;
-  confidence: Record<LinkageConfidenceBand, number>;
-};
-
-export type LinkageItem = {
+export type AuthUser = {
   id: string;
-  idProduct: number;
-  status: LinkageStatus;
-  score: number;
-  confidenceBand: LinkageConfidenceBand | null;
-  provenance: string;
-  updatedAt: string;
-  product: {
-    idProduct: number;
-    name: string;
-    idCategory: number | null;
-    categoryName: string | null;
-    idExpansion: number | null;
-    idMetacard: number | null;
-    dateAdded: string | null;
-  };
-  card: {
-    id: string;
-    name: string;
-    supertype: string | null;
-    subtypes: string[];
-    hp: string | null;
-    types: string[];
-    setId: string;
-    setName: string;
-    rarity: string | null;
-    imageSmall: string | null;
-    imageLarge: string | null;
-  } | null;
-  priceGuide: {
-    idCategory: number | null;
-    trend: number | null;
-    avg: number | null;
-    low: number | null;
-    avg1: number | null;
-    avg7: number | null;
-    avg30: number | null;
-    avgHolo: number | null;
-    lowHolo: number | null;
-    trendHolo: number | null;
-    avg1Holo: number | null;
-    avg7Holo: number | null;
-    avg30Holo: number | null;
-  } | null;
+  email: string | null;
+  name: string | null;
+  image: string | null;
 };
 
-export type LinkageListRequest = {
-  query?: string;
-  page: number;
-  pageSize: number;
-  status?: LinkageStatus;
-  confidenceBand?: LinkageConfidenceBand;
-  sortBy?: 'updatedAt' | 'score' | 'status';
-  sortOrder?: 'asc' | 'desc';
-};
+export type CollectionKind = 'owned' | 'favorites' | 'wishlist' | 'binder';
 
-export type CardmarketProductListRequest = {
-  query?: string;
-  page: number;
-  pageSize: number;
-  sortBy?: 'updatedAt' | 'idProduct' | 'name';
-  sortOrder?: 'asc' | 'desc';
-};
-
-export type CardmarketProductSuggestionsRequest = {
-  idProduct: number;
-  limit?: number;
-};
-
-export type CardmarketProductSuggestion = {
-  card: CardSummary;
-  score: number;
-  reason: string;
-};
-
-export type CardmarketSetMappingConfidence = 'high' | 'medium' | 'low';
-
-export type CardmarketSetMappingListRequest = {
-  query?: string;
-  page: number;
-  pageSize: number;
-  confidence?: CardmarketSetMappingConfidence;
-  sortBy?: 'updatedAt' | 'ourSetId' | 'confidence' | 'evidenceCount';
-  sortOrder?: 'asc' | 'desc';
-};
-
-export type CardmarketSetMappingInput = {
-  ourSetId: string;
-  cardmarketSetCode?: string | null;
-  cardmarketSetSlug?: string | null;
-  cardmarketIdExpansion?: number | null;
-  confidence?: CardmarketSetMappingConfidence;
-  source?: string;
-};
-
-export type CardmarketSetMappingItem = {
+export type CollectionSummary = {
   id: string;
-  ourSetId: string;
-  cardmarketSetCode: string | null;
-  cardmarketSetSlug: string | null;
-  cardmarketIdExpansion: number | null;
-  confidence: CardmarketSetMappingConfidence;
-  evidenceCount: number;
-  conflictCount: number;
-  lastScore: number | null;
-  lastMatchedCardId: string | null;
-  source: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type CardmarketProductItem = {
-  idProduct: number;
+  userId: string;
+  kind: CollectionKind;
   name: string;
-  idCategory: number | null;
-  categoryName: string | null;
-  idExpansion: number | null;
-  idMetacard: number | null;
-  dateAdded: string | null;
-  raw: unknown;
+  itemCount: number;
   createdAt: string;
   updatedAt: string;
-  priceGuide: {
-    idProduct: number;
-    idCategory: number | null;
-    avg: number | null;
-    low: number | null;
-    trend: number | null;
-    avg1: number | null;
-    avg7: number | null;
-    avg30: number | null;
-    avgHolo: number | null;
-    lowHolo: number | null;
-    trendHolo: number | null;
-    avg1Holo: number | null;
-    avg7Holo: number | null;
-    avg30Holo: number | null;
-    raw: unknown;
-    updatedAt: string;
-  } | null;
-  link: {
-    id: string;
-    status: LinkageStatus;
-    score: number | null;
-    matchMethod: string | null;
-    confidenceBand: LinkageConfidenceBand | null;
-    cardId: string | null;
-    updatedAt: string;
-  } | null;
 };
 
-export type LinkageImportResult = {
-  started: boolean;
-  total: number;
-  processed: number;
-  updated: number;
-  failed: number;
+export type CollectionItem = {
+  id: string;
+  collectionId: string;
+  cardId: string;
+  quantity: number;
+  condition: string | null;
+  finish: string | null;
+  language: string;
+  notes: string | null;
+  purchasePriceCents: number | null;
+  createdAt: string;
+  updatedAt: string;
+  card: CardSummary;
 };
 
-export type LinkageImportJobStatus = 'queued' | 'running' | 'completed' | 'failed';
+export type PriceStatus = 'pending' | 'success' | 'failed' | 'blocked' | 'not_found' | 'missing_url' | 'skipped';
+export type PriceRefreshJobStatus = 'queued' | 'running' | 'completed' | 'failed';
 
-export type LinkageImportJob = {
+export type CardPriceSnapshot = {
+  id: string;
+  cardId: string;
+  pricingUrl: string | null;
+  status: PriceStatus;
+  productName: string | null;
+  cardNumber: string | null;
+  rarity: string | null;
+  printedInSet: string | null;
+  availableItems: number | null;
+  fromPriceCents: number | null;
+  priceTrendCents: number | null;
+  avgSellPrice30dCents: number | null;
+  avgPrice7dCents: number | null;
+  avgPrice1dCents: number | null;
+  currency: string | null;
+  lastError: string | null;
+  fetchedAt: string;
+};
+
+export type PriceRefreshJobItem = {
+  id: string;
   jobId: string;
-  status: LinkageImportJobStatus;
+  cardId: string;
+  pricingUrl: string | null;
+  status: PriceStatus;
+  error: string | null;
+  snapshotId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  card?: Pick<CardSummary, 'id' | 'name' | 'setName' | 'imageSmall' | 'imageLarge'>;
+};
+
+export type PriceRefreshJob = {
+  id: string;
+  userId: string;
+  collectionId: string;
+  status: PriceRefreshJobStatus;
   total: number;
   processed: number;
-  updated: number;
+  succeeded: number;
   failed: number;
-  progressPct: number;
-  startedAt: string;
+  skipped: number;
+  startedAt: string | null;
   finishedAt: string | null;
   error: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items?: PriceRefreshJobItem[];
 };
 
 export const queryKeys = {
+  me: () => ['me'] as const,
   cards: {
     list: (query: string, page: number, pageSize: number, orderBy?: string) =>
       ['cards.list', query, page, pageSize, orderBy ?? ''] as const,
     detail: (id: string) => ['cards.detail', id] as const,
+    batch: (ids: string[]) => ['cards.batch', ...ids] as const,
+    prices: (id: string) => ['cards.prices', id] as const,
   },
   sets: {
     list: (query: string, page: number, pageSize: number, orderBy?: string) =>
       ['sets.list', query, page, pageSize, orderBy ?? ''] as const,
     detail: (id: string) => ['sets.detail', id] as const,
   },
-  linkage: {
-    summary: () => ['linkage.summary'] as const,
-    list: (filters: LinkageListRequest) =>
-      [
-        'linkage.list',
-        filters.query ?? '',
-        filters.page,
-        filters.pageSize,
-        filters.status ?? '',
-        filters.confidenceBand ?? '',
-        filters.sortBy ?? 'updatedAt',
-        filters.sortOrder ?? 'desc',
-      ] as const,
-    products: (filters: CardmarketProductListRequest) =>
-      [
-        'linkage.products',
-        filters.query ?? '',
-        filters.page,
-        filters.pageSize,
-        filters.sortBy ?? 'updatedAt',
-        filters.sortOrder ?? 'desc',
-      ] as const,
-    productSuggestions: (idProduct: number, limit: number) =>
-      ['linkage.productSuggestions', idProduct, limit] as const,
-    setMappings: (filters: CardmarketSetMappingListRequest) =>
-      [
-        'linkage.setMappings',
-        filters.query ?? '',
-        filters.page,
-        filters.pageSize,
-        filters.confidence ?? '',
-        filters.sortBy ?? 'updatedAt',
-        filters.sortOrder ?? 'desc',
-      ] as const,
+  collections: {
+    list: () => ['collections.list'] as const,
+    items: (id: string) => ['collections.items', id] as const,
+  },
+  priceJobs: {
+    detail: (id: string) => ['priceJobs.detail', id] as const,
   },
 };

@@ -18,12 +18,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/use-auth';
 
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
+  const auth = useAuth();
 
   useEffect(() => {
     setSearchQuery(searchParams.get('q') ?? '');
@@ -86,24 +88,29 @@ export function TopNav() {
           <Button variant="outline" size="icon" className="rounded-full border-border" aria-label="Notifications">
             <Bell className="size-4" />
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="outline" className="h-10 rounded-full border-border px-1.5 pr-2" />
-              }
-            >
-              <Avatar className="size-7">
-                <AvatarFallback>AT</AvatarFallback>
-              </Avatar>
-              <ChevronDown className="size-4 text-muted-foreground" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Log out</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {auth.user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" className="h-10 rounded-full border-border px-1.5 pr-2" />
+                }
+              >
+                <Avatar className="size-7">
+                  <AvatarFallback>{auth.user.email?.slice(0, 2).toUpperCase() ?? 'U'}</AvatarFallback>
+                </Avatar>
+                <ChevronDown className="size-4 text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem>{auth.user.email}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => auth.logout.mutate()}>Log out</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="outline" className="rounded-full border-border" render={<Link href={'/auth' as Route} />}>
+              Sign in
+            </Button>
+          )}
         </div>
       </div>
 

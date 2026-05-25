@@ -1,4 +1,4 @@
-import type { CardmarketFirecrawlExtract } from './cardmarket.schema';
+import type { FirecrawlPriceExtract } from './pricing.schema';
 
 export type NormalizedPrice = {
   cents: number;
@@ -25,15 +25,12 @@ export const parseLocalizedPriceToCents = (value: string | number | null | undef
 
   const currencyMatch = raw.match(/(EUR|USD|GBP|€|\$|£)/i);
   const currency = normalizeCurrency(currencyMatch?.[1] ?? null) ?? 'EUR';
-
   const numeric = raw
     .replace(/[^\d,.-]/g, '')
     .replace(/\.(?=\d{3}(\D|$))/g, '')
     .replace(',', '.');
-
   const parsed = Number.parseFloat(numeric);
   if (!Number.isFinite(parsed)) return null;
-
   return { cents: Math.round(parsed * 100), currency };
 };
 
@@ -43,13 +40,12 @@ export const parseAvailableItems = (value: string | number | null | undefined): 
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-export const normalizeCardmarketExtraction = (input: CardmarketFirecrawlExtract) => {
+export const normalizeFirecrawlPriceExtraction = (input: FirecrawlPriceExtract) => {
   const fromPrice = parseLocalizedPriceToCents(input.fromPrice);
   const priceTrend = parseLocalizedPriceToCents(input.priceTrend);
   const avg30 = parseLocalizedPriceToCents(input.avgSellPrice30d);
   const avg7 = parseLocalizedPriceToCents(input.avgPrice7d);
   const avg1 = parseLocalizedPriceToCents(input.avgPrice1d);
-
   const currency = fromPrice?.currency ?? priceTrend?.currency ?? avg30?.currency ?? avg7?.currency ?? avg1?.currency ?? null;
 
   return {
@@ -64,6 +60,6 @@ export const normalizeCardmarketExtraction = (input: CardmarketFirecrawlExtract)
     avgPrice7dCents: avg7?.cents ?? null,
     avgPrice1dCents: avg1?.cents ?? null,
     currency,
-    url: input.cardmarketUrl?.trim() || null,
+    pricingUrl: input.pricingUrl?.trim() || null,
   };
 };

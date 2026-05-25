@@ -7,25 +7,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  accounts      Account[]
+  sessions      Session[]
+  collections   Collection[]
+  priceJobs     PriceRefreshJob[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
 model Card {
-  id         String   @id
-  name       String
-  supertype  String?
-  subtypes   String[]
-  hp         String?
-  types      String[]
-  setId      String
-  setName    String
-  rarity     String?
-  imageSmall String?
-  imageLarge String?
-  raw        Json
-  fetchedAt  DateTime
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  cardLinks  CardLink[]
-  cardmarketEnrichment CardMarketEnrichment?
+  id              String              @id
+  name            String
+  supertype       String?
+  subtypes        String[]
+  hp              String?
+  types           String[]
+  setId           String
+  setName         String
+  rarity          String?
+  imageSmall      String?
+  imageLarge      String?
+  raw             Json
+  fetchedAt       DateTime
+  expiresAt       DateTime
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  collectionItems CollectionItem[]
+  priceSnapshots  CardPriceSnapshot[]
+  priceJobItems   PriceRefreshJobItem[]
 }
 
 model Set {
@@ -67,6 +117,7 @@ model SetSearchCache {
   query      String
   page       Int
   pageSize   Int
+  orderBy    String?
   setIds     String[]
   count      Int
   totalCount Int
@@ -77,46 +128,69 @@ model SetSearchCache {
   @@index([expiresAt])
 }
 
-enum CardLinkStatus {
-  auto_linked
-  needs_review
-  unlinked
-  rejected
+enum CollectionKind {
+  owned
+  favorites
+  wishlist
+  binder
 }
 
-enum CardLinkConfidenceBand {
-  high
-  medium
-  low
+model Collection {
+  id        String           @id @default(cuid())
+  userId    String
+  kind      CollectionKind
+  name      String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CollectionItem[]
+  priceJobs PriceRefreshJob[]
+
+  @@unique([userId, kind, name])
+  @@index([userId, kind])
 }
 
-enum CardmarketEnrichmentStatus {
-  pending
-  success
-  failed
-  rate_limited
-  forbidden
+model CollectionItem {
+  id                 String     @id @default(cuid())
+  collectionId       String
+  cardId             String
+  quantity           Int        @default(1)
+  condition          String?
+  finish             String?
+  language           String     @default("en")
+  notes              String?
+  purchasePriceCents Int?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  collection         Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  card               Card       @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, cardId])
+  @@index([cardId])
 }
 
-enum CardmarketSetMappingConfidence {
-  low
-  medium
-  high
-}
-
-enum CardMarketEnrichmentStatus {
+enum PriceStatus {
   pending
   success
   failed
   blocked
   not_found
-  disabled
+  missing_url
+  skipped
 }
 
-model CardMarketEnrichment {
-  id                   String                      @id @default(cuid())
-  cardId               String                      @unique
-  url                  String
+enum PriceRefreshJobStatus {
+  queued
+  running
+  completed
+  failed
+}
+
+model CardPriceSnapshot {
+  id                   String      @id @default(cuid())
+  cardId               String
+  pricingUrl           String?
+  status               PriceStatus
   productName          String?
   cardNumber           String?
   rarity               String?
@@ -128,156 +202,55 @@ model CardMarketEnrichment {
   avgPrice7dCents      Int?
   avgPrice1dCents      Int?
   currency             String?
-  status               CardMarketEnrichmentStatus @default(pending)
-  attemptCount         Int                         @default(0)
-  lastFetchedAt        DateTime?
-  nextRetryAt          DateTime?
   lastError            String?
   rawExtractedJson     Json?
-  createdAt            DateTime                    @default(now())
-  updatedAt            DateTime                    @updatedAt
-  card                 Card                        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  fetchedAt            DateTime    @default(now())
+  createdAt            DateTime    @default(now())
+  card                 Card        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  jobItems             PriceRefreshJobItem[]
 
+  @@index([cardId, fetchedAt])
   @@index([status])
-  @@index([nextRetryAt])
 }
 
-model CardmarketProduct {
-  idProduct              Int                       @id
-  name                   String
-  idCategory             Int?
-  categoryName           String?
-  idExpansion            Int?
-  idMetacard             Int?
-  dateAdded              String?
-  raw                    Json
-  finalUrl               String?
-  setSlug                String?
-  cardSlug               String?
-  parsedSetCode          String?
-  parsedCollectorNumber  String?
-  enrichedAt             DateTime?
-  enrichmentStatus       CardmarketEnrichmentStatus?
-  enrichmentError        String?
-  enrichmentAttempts     Int                       @default(0)
-  nextRetryAt            DateTime?
-  createdAt              DateTime                  @default(now())
-  updatedAt              DateTime                  @updatedAt
-  priceGuide             CardmarketPriceGuide?
-  priceGuideSnapshots    CardmarketPriceGuideSnapshot[]
-  link                   CardLink?
+model PriceRefreshJob {
+  id           String                @id @default(cuid())
+  userId       String
+  collectionId String
+  status       PriceRefreshJobStatus @default(queued)
+  total        Int                   @default(0)
+  processed    Int                   @default(0)
+  succeeded    Int                   @default(0)
+  failed       Int                   @default(0)
+  skipped      Int                   @default(0)
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  error        String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collection   Collection            @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  items        PriceRefreshJobItem[]
 
-  @@index([name])
-  @@index([idExpansion])
-  @@index([enrichmentStatus])
-  @@index([nextRetryAt])
-  @@index([parsedSetCode])
-  @@index([parsedCollectorNumber])
+  @@index([userId, createdAt])
+  @@index([collectionId, createdAt])
 }
 
-model CardmarketPriceGuide {
-  idProduct  Int               @id
-  idCategory Int?
-  avg        Float?
-  low        Float?
-  trend      Float?
-  avg1       Float?
-  avg7       Float?
-  avg30      Float?
-  avgHolo    Float?
-  lowHolo    Float?
-  trendHolo  Float?
-  avg1Holo   Float?
-  avg7Holo   Float?
-  avg30Holo  Float?
-  raw        Json
-  updatedAt  DateTime          @updatedAt
-  product   CardmarketProduct @relation(fields: [idProduct], references: [idProduct], onDelete: Cascade)
+model PriceRefreshJobItem {
+  id          String             @id @default(cuid())
+  jobId       String
+  cardId      String
+  pricingUrl  String?
+  status      PriceStatus        @default(pending)
+  error       String?
+  snapshotId  String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  job         PriceRefreshJob     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  card        Card                @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  snapshot    CardPriceSnapshot?  @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
 
-  @@index([idCategory])
-}
-
-model CardmarketPriceGuideSnapshot {
-  id           String            @id @default(cuid())
-  idProduct    Int
-  snapshotDate DateTime
-  idCategory   Int?
-  avg          Float?
-  low          Float?
-  trend        Float?
-  avg1         Float?
-  avg7         Float?
-  avg30        Float?
-  avgHolo      Float?
-  lowHolo      Float?
-  trendHolo    Float?
-  avg1Holo     Float?
-  avg7Holo     Float?
-  avg30Holo    Float?
-  raw          Json
-  createdAt    DateTime          @default(now())
-  product      CardmarketProduct @relation(fields: [idProduct], references: [idProduct], onDelete: Cascade)
-
-  @@unique([idProduct, snapshotDate])
-  @@index([idProduct, snapshotDate])
-}
-
-model CardmarketPriceGuideImport {
-  id              String   @id @default(cuid())
-  sourceCreatedAt DateTime @unique
-  importedAt      DateTime @default(now())
-  guideCount      Int
-}
-
-model CardLink {
-  id              String                 @id @default(cuid())
-  idProduct       Int                    @unique
-  cardId          String?
-  status          CardLinkStatus
-  score           Float?
-  matchMethod     String?
-  confidenceBand  CardLinkConfidenceBand?
-  reviewedAt      DateTime?
-  provenance      String
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
-  product         CardmarketProduct      @relation(fields: [idProduct], references: [idProduct], onDelete: Cascade)
-  card            Card?                  @relation(fields: [cardId], references: [id], onDelete: SetNull)
-  history         CardLinkHistory[]
-
-  @@index([status])
-  @@index([confidenceBand])
+  @@unique([jobId, cardId])
   @@index([cardId])
-}
-
-model CardLinkHistory {
-  id         String   @id @default(cuid())
-  cardLinkId String
-  action     String
-  payload    Json?
-  createdAt  DateTime @default(now())
-  cardLink   CardLink @relation(fields: [cardLinkId], references: [id], onDelete: Cascade)
-
-  @@index([cardLinkId])
-}
-
-model CardmarketSetMapping {
-  id                String                         @id @default(cuid())
-  ourSetId          String                         @unique
-  cardmarketSetCode String?
-  cardmarketSetSlug String?
-  cardmarketIdExpansion Int?
-  confidence        CardmarketSetMappingConfidence @default(low)
-  evidenceCount     Int                            @default(0)
-  conflictCount     Int                            @default(0)
-  lastScore         Float?
-  lastMatchedCardId String?
-  source            String                         @default("derived_auto")
-  createdAt         DateTime                       @default(now())
-  updatedAt         DateTime                       @updatedAt
-
-  @@index([cardmarketSetCode])
-  @@index([cardmarketSetSlug])
-  @@index([cardmarketIdExpansion])
-  @@index([confidence])
+  @@index([status])
 }
