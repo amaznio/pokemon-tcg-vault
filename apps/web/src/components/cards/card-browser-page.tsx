@@ -15,9 +15,16 @@ import { PaginationBar } from '@/components/shared/pagination-bar';
 const hasAdvancedQuerySyntax = (value: string): boolean => /[:()"]/g.test(value);
 const escapeQueryValue = (value: string): string =>
   value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-const quoteIfNeeded = (value: string): string => (/\s/.test(value) ? `"${value}"` : value);
+const quoteIfNeeded = (value: string): string => {
+  const escaped = escapeQueryValue(value);
+  return /\s/.test(escaped) ? `"${escaped}"` : escaped;
+};
 const DEFAULT_PAGE_SIZE = 20;
 const SETS_SELECTOR_PAGE_SIZE = 100;
+const pageSizeOptions = [20, 40, 60, 80, 100] as const;
+const sortOptions = ['relevance', 'number', 'name', 'set', 'rarity'] as const;
+const scopeOptions = ['all', 'favorites', 'owned', 'wishlist'] as const;
+const DEFAULT_SORT = 'relevance';
 
 const initialFilters: DiscoveryFilters = {
   query: '',
@@ -26,7 +33,7 @@ const initialFilters: DiscoveryFilters = {
   rarity: [],
   supertype: '',
   scope: 'all',
-  sort: 'relevance',
+  sort: DEFAULT_SORT,
 };
 
 const toOrderBy = (sort: string): string | undefined => {
@@ -52,30 +59,96 @@ const buildApiQuery = (filters: DiscoveryFilters, query: string): string => {
   return terms.join(' ');
 };
 
+const getTrimmedParam = (params: URLSearchParams, key: string): string => params.get(key)?.trim() ?? '';
+
+const getValidatedParam = <T extends readonly string[]>(
+  params: URLSearchParams,
+  key: string,
+  validValues: T,
+  fallback: T[number],
+): T[number] => {
+  const value = getTrimmedParam(params, key);
+  return (validValues as readonly string[]).includes(value) ? (value as T[number]) : fallback;
+};
+
+const getRarityParams = (params: URLSearchParams): string[] => {
+  const values = params
+    .getAll('rarity')
+    .flatMap((entry) => entry.split(','))
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return [...new Set(values)];
+};
+
+const getPageParam = (params: URLSearchParams): number => {
+  const page = Number(params.get('page'));
+  return Number.isInteger(page) && page > 0 ? page : 1;
+};
+
+const getPageSizeParam = (params: URLSearchParams): number => {
+  const pageSize = Number(params.get('pageSize'));
+  return pageSizeOptions.includes(pageSize as (typeof pageSizeOptions)[number]) ? pageSize : DEFAULT_PAGE_SIZE;
+};
+
+const readCardsUrlState = (params: URLSearchParams) => ({
+  filters: {
+    query: getTrimmedParam(params, 'q'),
+    set: getTrimmedParam(params, 'set'),
+    type: getTrimmedParam(params, 'type'),
+    rarity: getRarityParams(params),
+    supertype: getTrimmedParam(params, 'supertype'),
+    scope: getValidatedParam(params, 'scope', scopeOptions, initialFilters.scope),
+    sort: getValidatedParam(params, 'sort', sortOptions, DEFAULT_SORT),
+  } satisfies DiscoveryFilters,
+  page: getPageParam(params),
+  pageSize: getPageSizeParam(params),
+});
+
+const buildCardsUrlSearch = (filters: DiscoveryFilters, page: number, pageSize: number): string => {
+  const params = new URLSearchParams();
+  const query = filters.query.trim();
+
+  if (query) params.set('q', query);
+  if (filters.set) params.set('set', filters.set);
+  if (filters.type) params.set('type', filters.type);
+  filters.rarity.forEach((rarity) => params.append('rarity', rarity));
+  if (filters.supertype) params.set('supertype', filters.supertype);
+  if (filters.scope !== initialFilters.scope) params.set('scope', filters.scope);
+  if (filters.sort !== initialFilters.sort) params.set('sort', filters.sort);
+  if (pageSize !== DEFAULT_PAGE_SIZE) params.set('pageSize', String(pageSize));
+  if (page > 1) params.set('page', String(page));
+
+  return params.toString();
+};
+
 export function CardBrowserPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const currentUrlQuery = searchParams.get('q') ?? '';
-  const [draftFilters, setDraftFilters] = useState(initialFilters);
-  const [appliedFilters, setAppliedFilters] = useState(initialFilters);
-  const [heroQuery, setHeroQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const [draftPageSize, setDraftPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const serializedSearchParams = searchParams.toString();
+  const urlState = useMemo(
+    () => readCardsUrlState(new URLSearchParams(serializedSearchParams)),
+    [serializedSearchParams],
+  );
+  const [draftFilters, setDraftFilters] = useState<DiscoveryFilters>(() => urlState.filters);
+  const [appliedFilters, setAppliedFilters] = useState<DiscoveryFilters>(() => urlState.filters);
+  const [heroQuery, setHeroQuery] = useState(() => urlState.filters.query);
+  const [page, setPage] = useState(() => urlState.page);
+  const [draftPageSize, setDraftPageSize] = useState(() => urlState.pageSize);
+  const [pageSize, setPageSize] = useState(() => urlState.pageSize);
   const [useLargeImages, setUseLargeImages] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
   const gridTopRef = useRef<HTMLDivElement | null>(null);
   const state = useServerCollection();
 
   useEffect(() => {
-    const next = { ...initialFilters, query: currentUrlQuery };
-    setHeroQuery(currentUrlQuery);
-    setDraftFilters(next);
-    setAppliedFilters(next);
-    setDraftPageSize(DEFAULT_PAGE_SIZE);
-    setPageSize(DEFAULT_PAGE_SIZE);
-    setPage(1);
-  }, [currentUrlQuery]);
+    setHeroQuery(urlState.filters.query);
+    setDraftFilters(urlState.filters);
+    setAppliedFilters(urlState.filters);
+    setDraftPageSize(urlState.pageSize);
+    setPageSize(urlState.pageSize);
+    setPage(urlState.page);
+  }, [urlState]);
 
   const orderBy = toOrderBy(appliedFilters.sort);
   const apiQuery = useMemo(() => buildApiQuery(appliedFilters, appliedFilters.query), [appliedFilters]);
@@ -87,12 +160,7 @@ export function CardBrowserPage() {
     setDraftPageSize(nextPageSize);
     setPageSize(nextPageSize);
     setPage(1);
-    const params = new URLSearchParams(searchParams.toString());
-    const next = nextFilters.query.trim();
-    if (next) params.set('q', next);
-    else params.delete('q');
-    params.delete('page');
-    const query = params.toString();
+    const query = buildCardsUrlSearch(nextFilters, 1, nextPageSize);
     router.push((`/cards${query ? `?${query}` : ''}`) as Route);
   };
 
@@ -131,6 +199,8 @@ export function CardBrowserPage() {
   const handlePageChange = (nextPage: number) => {
     gridTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setPage(nextPage);
+    const query = buildCardsUrlSearch(appliedFilters, nextPage, pageSize);
+    router.push((`/cards${query ? `?${query}` : ''}`) as Route);
   };
 
   return (

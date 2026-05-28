@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CardmarketTab } from '@/components/cards/cardmarket-tab';
+import { CardTiltFrame } from '@/components/cards/card-tilt-frame';
 
 type CardDetailActions = {
   isFavorite: boolean;
@@ -28,13 +29,15 @@ type CardRawView = Record<string, unknown>;
 
 function CardImagePanel({ card }: { card: CardDetail }) {
   return (
-    <div className="w-full md:sticky md:top-24 md:w-[340px] md:min-w-[340px] md:max-w-[340px] lg:w-[360px] lg:min-w-[360px] lg:max-w-[360px]">
+    <div className="mx-auto w-full max-w-[320px] min-w-0 sm:max-w-[360px] md:sticky md:top-24 md:mx-0 md:w-[340px] md:min-w-[340px] md:max-w-[340px] lg:w-[360px] lg:min-w-[360px] lg:max-w-[360px]">
       {card.imageLarge ? (
-        <img
-          src={card.imageLarge}
-          alt={card.name}
-          className="w-full rounded-2xl object-contain shadow-md"
-        />
+        <CardTiltFrame className="w-full">
+          <img
+            src={card.imageLarge}
+            alt={card.name}
+            className="w-full object-contain drop-shadow-md"
+          />
+        </CardTiltFrame>
       ) : (
         <div className="grid min-h-[420px] place-items-center rounded-2xl border border-border bg-muted/20 text-sm text-muted-foreground">
           No card image available.

@@ -11,6 +11,9 @@ type SetsApiResponse = { data: any[]; count: number; totalCount: number; page: n
 type SetApiResponse = { data: any };
 
 const client = new PokemonTcgHttpClient(env.POKEMON_TCG_API_KEY);
+const NATURAL_NUMBER_SORT_PAGE_SIZE = 100;
+const NATURAL_NUMBER_SORT_MODE = 'natural-number-v1';
+const naturalNumberCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
 const isMissingSetSearchCacheOrderByColumn = (error: unknown): boolean => {
   if (!error || typeof error !== 'object') return false;
@@ -22,6 +25,103 @@ const isMissingSetSearchCacheOrderByColumn = (error: unknown): boolean => {
 const hasAdvancedQuerySyntax = (value: string): boolean => /[:()"]/g.test(value);
 
 const escapeQueryValue = (value: string): string => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
+const hasExactSetFilter = (query: string): boolean => /(?:^|\s|\()set\.id:[A-Za-z0-9_-]+(?=$|\s|\))/i.test(query);
+
+const getExactSetOnlyId = (query: string): string | null => {
+  const match = query.trim().match(/^set\.id:([A-Za-z0-9_-]+)$/i);
+  return match?.[1] ?? null;
+};
+
+const shouldUseNaturalNumberSort = (query: string, orderBy?: string): boolean =>
+  orderBy === 'number' && hasExactSetFilter(query);
+
+const getCollectorNumber = (card: any): string => {
+  const rawNumber = typeof card?.number === 'string' ? card.number : '';
+  if (rawNumber.trim()) return rawNumber.trim();
+
+  const id = typeof card?.id === 'string' ? card.id : '';
+  return id.split('-').at(-1) ?? '';
+};
+
+const compareCardsByCollectorNumber = (a: any, b: any): number => {
+  const numberCompare = naturalNumberCollator.compare(getCollectorNumber(a), getCollectorNumber(b));
+  if (numberCompare !== 0) return numberCompare;
+
+  return String(a?.id ?? '').localeCompare(String(b?.id ?? ''));
+};
+
+const getCachedCardSortPayload = (card: Card) => {
+  const raw = card.raw;
+  const number =
+    raw && typeof raw === 'object' && !Array.isArray(raw) && typeof (raw as { number?: unknown }).number === 'string'
+      ? ((raw as { number: string }).number)
+      : undefined;
+
+  return { id: card.id, number };
+};
+
+const compareCachedCardsByCollectorNumber = (a: Card, b: Card): number =>
+  compareCardsByCollectorNumber(getCachedCardSortPayload(a), getCachedCardSortPayload(b));
+
+const getCachedExactSetNumberPage = async (
+  query: string,
+  page: number,
+  pageSize: number,
+): Promise<{ data: Card[]; count: number; totalCount: number; stale: boolean } | null> => {
+  const setId = getExactSetOnlyId(query);
+  if (!setId) return null;
+
+  const cards = await prisma.card.findMany({ where: { setId } });
+  if (!cards.length) return null;
+
+  const sorted = [...cards].sort(compareCachedCardsByCollectorNumber);
+  const start = (page - 1) * pageSize;
+  const data = sorted.slice(start, start + pageSize);
+
+  return {
+    data,
+    count: data.length,
+    totalCount: sorted.length,
+    stale: sorted.some((card) => !isFresh(card.expiresAt)),
+  };
+};
+
+const buildCardsPath = (query: string, page: number, pageSize: number, orderBy?: string): string => {
+  const q = encodeURIComponent(query || '');
+  const o = orderBy ? `&orderBy=${encodeURIComponent(orderBy)}` : '';
+  return `/cards?q=${q}&page=${page}&pageSize=${pageSize}${o}`;
+};
+
+const fetchCardsPage = (query: string, page: number, pageSize: number, orderBy?: string): Promise<CardsApiResponse> =>
+  client.getJson<CardsApiResponse>(buildCardsPath(query, page, pageSize, orderBy));
+
+const fetchCardsWithNaturalNumberSort = async (
+  query: string,
+  page: number,
+  pageSize: number,
+): Promise<CardsApiResponse> => {
+  const firstPage = await fetchCardsPage(query, 1, NATURAL_NUMBER_SORT_PAGE_SIZE);
+  const totalPages = Math.ceil(firstPage.totalCount / NATURAL_NUMBER_SORT_PAGE_SIZE);
+  const remainingPages = await Promise.all(
+    Array.from({ length: Math.max(totalPages - 1, 0) }, (_, index) =>
+      fetchCardsPage(query, index + 2, NATURAL_NUMBER_SORT_PAGE_SIZE),
+    ),
+  );
+  const sorted = [firstPage, ...remainingPages]
+    .flatMap((payload) => payload.data)
+    .sort(compareCardsByCollectorNumber);
+  const start = (page - 1) * pageSize;
+  const data = sorted.slice(start, start + pageSize);
+
+  return {
+    data,
+    count: data.length,
+    totalCount: firstPage.totalCount,
+    page,
+    pageSize,
+  };
+};
 
 const normalizeCardsQuery = (query: string): string => {
   const trimmed = query.trim();
@@ -110,7 +210,14 @@ export class CatalogService {
 
   async searchCards(query: string, page: number, pageSize: number, orderBy?: string) {
     const normalizedQuery = normalizeCardsQuery(query);
-    const queryHash = createQueryHash({ query: normalizedQuery, page, pageSize, orderBy });
+    const useNaturalNumberSort = shouldUseNaturalNumberSort(normalizedQuery, orderBy);
+    const queryHash = createQueryHash({
+      query: normalizedQuery,
+      page,
+      pageSize,
+      orderBy,
+      sortMode: useNaturalNumberSort ? NATURAL_NUMBER_SORT_MODE : undefined,
+    });
     const cache = await prisma.cardSearchCache.findUnique({ where: { queryHash } });
 
     console.info('[cards.search] start', {
@@ -119,6 +226,7 @@ export class CatalogService {
       page,
       pageSize,
       orderBy: orderBy ?? null,
+      sortMode: useNaturalNumberSort ? NATURAL_NUMBER_SORT_MODE : null,
       queryHash,
       cacheFound: Boolean(cache),
       cacheFresh: cache ? isFresh(cache.expiresAt) : false,
@@ -137,11 +245,62 @@ export class CatalogService {
       return { data: ordered, count: cache.count, totalCount: cache.totalCount, stale: false };
     }
 
+    if (useNaturalNumberSort) {
+      const cachedSetPage = await getCachedExactSetNumberPage(normalizedQuery, page, pageSize);
+
+      if (cachedSetPage) {
+        const expiresAt = new Date(Date.now() + env.SEARCH_TTL_SECONDS * 1000);
+        const cardIds = cachedSetPage.data.map((card) => card.id);
+
+        await prisma.cardSearchCache.upsert({
+          where: { queryHash },
+          create: {
+            queryHash,
+            query: normalizedQuery,
+            page,
+            pageSize,
+            orderBy: orderBy ?? null,
+            cardIds,
+            count: cachedSetPage.count,
+            totalCount: cachedSetPage.totalCount,
+            fetchedAt: new Date(),
+            expiresAt,
+          },
+          update: {
+            query: normalizedQuery,
+            page,
+            pageSize,
+            orderBy: orderBy ?? null,
+            cardIds,
+            count: cachedSetPage.count,
+            totalCount: cachedSetPage.totalCount,
+            fetchedAt: new Date(),
+            expiresAt,
+          },
+        });
+
+        console.info('[cards.search] cached-set-natural-number-sort', {
+          queryHash,
+          count: cachedSetPage.count,
+          totalCount: cachedSetPage.totalCount,
+          stale: cachedSetPage.stale,
+        });
+        return {
+          data: cachedSetPage.data,
+          count: cachedSetPage.count,
+          totalCount: cachedSetPage.totalCount,
+          stale: cachedSetPage.stale,
+        };
+      }
+    }
+
     try {
-      const q = encodeURIComponent(normalizedQuery || '');
-      const o = orderBy ? `&orderBy=${encodeURIComponent(orderBy)}` : '';
-      const upstreamPath = `/cards?q=${q}&page=${page}&pageSize=${pageSize}${o}`;
-      const payload = await client.getJson<CardsApiResponse>(upstreamPath);
+      const upstreamPath = useNaturalNumberSort
+        ? `${buildCardsPath(normalizedQuery, 1, NATURAL_NUMBER_SORT_PAGE_SIZE)} + natural sort`
+        : buildCardsPath(normalizedQuery, page, pageSize, orderBy);
+      const payload = useNaturalNumberSort
+        ? await fetchCardsWithNaturalNumberSort(normalizedQuery, page, pageSize)
+        : await fetchCardsPage(normalizedQuery, page, pageSize, orderBy);
       console.info('[cards.search] upstream-success', {
         queryHash,
         upstreamPath,
