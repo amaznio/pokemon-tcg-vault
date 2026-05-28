@@ -13,8 +13,20 @@ export type CardSummary = {
   updatedAt: string;
 };
 
+export type CardDefaultPricing = {
+  pricingUrl: string | null;
+  fromPriceCents: number | null;
+  priceTrendCents: number | null;
+  avgSellPrice30dCents: number | null;
+  avgPrice7dCents: number | null;
+  avgPrice1dCents: number | null;
+  currency: string;
+  updatedAt: string | null;
+};
+
 export type CardDetail = CardSummary & {
   raw: unknown;
+  defaultPricing: CardDefaultPricing | null;
 };
 
 export type SetSummary = {

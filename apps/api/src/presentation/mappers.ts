@@ -1,5 +1,6 @@
 import type { CardDetail, CardPriceSnapshot, CardSummary, CollectionItem, CollectionSummary, PaginatedResponse, PriceRefreshJob, PriceRefreshJobItem, SetDetail, SetSummary } from '@repo/shared';
 import type { Card, Collection, CollectionItem as DbCollectionItem, Set } from '@prisma/client';
+import { mapEmbeddedCardmarketPricing } from '../features/pricing/embedded-cardmarket-pricing';
 
 export const toCardSummary = (card: Card): CardSummary => ({
   id: card.id,
@@ -19,6 +20,7 @@ export const toCardSummary = (card: Card): CardSummary => ({
 export const toCardDetail = (card: Card): CardDetail => ({
   ...toCardSummary(card),
   raw: card.raw,
+  defaultPricing: mapEmbeddedCardmarketPricing(card.raw),
 });
 
 export const toSetSummary = (set: Set): SetSummary => ({
