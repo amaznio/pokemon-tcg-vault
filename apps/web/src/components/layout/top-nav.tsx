@@ -3,18 +3,20 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Bell, ChevronDown, PackageOpen, Sun } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, PackageOpen, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { MAIN_NAV_ITEMS } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { SearchInput } from '@/components/shared/search-input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -92,7 +94,10 @@ export function TopNav() {
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button variant="outline" className="h-10 rounded-full border-border px-1.5 pr-2" />
+                  <button
+                    type="button"
+                    className={cn(buttonVariants({ variant: 'outline' }), 'h-10 rounded-xl border-border px-1.5 pr-2')}
+                  />
                 }
               >
                 <Avatar className="size-7">
@@ -100,10 +105,17 @@ export function TopNav() {
                 </Avatar>
                 <ChevronDown className="size-4 text-muted-foreground" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem>{auth.user.email}</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => auth.logout.mutate()}>Log out</DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-64 max-w-[calc(100vw-2rem)]">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="px-2 py-1.5 text-sm font-medium text-foreground">
+                    <span className="block truncate">{auth.user.email}</span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => auth.logout.mutate()}>
+                    <LogOut />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
