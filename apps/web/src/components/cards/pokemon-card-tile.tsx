@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { CardSummary } from '@repo/shared';
 import { Badge } from '@/components/ui/badge';
 import { CardActions, type CardActionState } from '@/components/cards/card-actions';
-import { CardTiltFrame } from '@/components/cards/card-tilt-frame';
+import { PokemonHoloCardFrame } from '@/components/cards/pokemon-holo-card-frame';
 
 export function PokemonCardTile({
   card,
@@ -37,13 +37,19 @@ export function PokemonCardTile({
       tabIndex={0}
       aria-label={`Open details for ${card.name}`}
     >
-      <CardTiltFrame className="mx-auto w-full max-w-[280px]">
-        {card.imageSmall || card.imageLarge ? (
-          <img src={imageUrl} alt={card.name} className="mx-auto h-72 w-full object-contain" />
-        ) : (
-          <div className="grid h-72 place-items-center text-sm text-muted-foreground">No image</div>
-        )}
-      </CardTiltFrame>
+      {imageUrl ? (
+        <PokemonHoloCardFrame
+          card={card}
+          imageUrl={imageUrl}
+          alt={card.name}
+          variant="tile"
+          className="mx-auto w-full max-w-[220px] md:max-w-[240px]"
+        />
+      ) : (
+        <div className="mx-auto grid h-72 w-full max-w-[220px] place-items-center rounded-2xl border border-border/70 bg-muted/20 text-sm text-muted-foreground md:max-w-[240px]">
+          No image
+        </div>
+      )}
       <div className="mx-auto flex w-full max-w-[280px] flex-1 flex-col gap-2 px-2.5 md:gap-3 md:px-4">
         <div className="space-y-0.5">
           <p className="line-clamp-1 text-base font-semibold">{card.name}</p>
