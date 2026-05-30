@@ -11,25 +11,40 @@ export function CardGrid({
   loading,
   getActionState,
   emptyMessage,
+  emptyDescription = 'Try adjusting search terms or filters.',
   useLargeImages = false,
 }: {
   cards: CardSummary[];
   loading?: boolean;
   getActionState: (id: string) => CardActionState;
   emptyMessage: string;
+  emptyDescription?: string;
   useLargeImages?: boolean;
 }) {
   if (loading) {
-    return <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">{Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-[370px] rounded-xl" />)}</div>;
+    return (
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <Skeleton key={i} className="h-[370px] rounded-xl" />
+        ))}
+      </div>
+    );
   }
 
   if (!cards.length) {
-    return <EmptyState title={emptyMessage} description="Try adjusting search terms or filters." />;
+    return <EmptyState title={emptyMessage} description={emptyDescription} />;
   }
 
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {cards.map((card) => <PokemonCardTile key={card.id} card={card} actionState={getActionState(card.id)} useLargeImages={useLargeImages} />)}
+      {cards.map((card) => (
+        <PokemonCardTile
+          key={card.id}
+          card={card}
+          actionState={getActionState(card.id)}
+          useLargeImages={useLargeImages}
+        />
+      ))}
     </div>
   );
 }

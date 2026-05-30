@@ -3513,9 +3513,23 @@ Shine & Glare Effects
   overflow: visible;
 }
 
-.ptcg-holo-card.is-react .card__shine,
-.ptcg-holo-card.is-react .card__glare {
+.ptcg-holo-card.card.is-react .card__shine,
+.ptcg-holo-card.card.is-react .card__shine::before,
+.ptcg-holo-card.card.is-react .card__shine::after,
+.ptcg-holo-card.card.is-react .card__glare,
+.ptcg-holo-card.card.is-react .card__glare::before,
+.ptcg-holo-card.card.is-react .card__glare::after {
   border-radius: var(--card-radius);
+  -webkit-mask-image: var(--card-alpha-mask) !important;
+  mask-image: var(--card-alpha-mask) !important;
+  -webkit-mask-mode: alpha;
+  mask-mode: alpha;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100% !important;
+  mask-size: 100% 100% !important;
   overflow: hidden;
 }
 

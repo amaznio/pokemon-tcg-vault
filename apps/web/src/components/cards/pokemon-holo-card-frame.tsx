@@ -35,6 +35,7 @@ type HoloStyle = CSSProperties & {
   '--seedx': string;
   '--seedy': string;
   '--cosmosbg': string;
+  '--card-alpha-mask': string;
   '--foil'?: string;
   '--mask'?: string;
 };
@@ -104,6 +105,10 @@ function hashToUnit(value: string, salt: number) {
   return (hash >>> 0) / 4294967295;
 }
 
+function toCssUrl(value: string) {
+  return `url("${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")`;
+}
+
 function setInteractionStyle(element: HTMLElement, style: InteractionStyle) {
   Object.entries(style).forEach(([property, value]) => {
     element.style.setProperty(property, value);
@@ -155,7 +160,7 @@ function getPointerInteractionStyle(event: PointerEvent<HTMLElement>): Interacti
   };
 }
 
-function getInitialStyle(card: HoloMetadataCard, foilUrl?: string, maskUrl?: string): HoloStyle {
+function getInitialStyle(card: HoloMetadataCard, imageUrl: string, foilUrl?: string, maskUrl?: string): HoloStyle {
   const seedX = hashToUnit(card.id, 17);
   const seedY = hashToUnit(card.id, 71);
 
@@ -167,8 +172,9 @@ function getInitialStyle(card: HoloMetadataCard, foilUrl?: string, maskUrl?: str
     '--seedx': String(seedX),
     '--seedy': String(seedY),
     '--cosmosbg': `${Math.floor(seedX * 734)}px ${Math.floor(seedY * 1280)}px`,
-    ...(foilUrl ? { '--foil': `url(${foilUrl})` } : {}),
-    ...(maskUrl ? { '--mask': `url(${maskUrl})` } : {}),
+    '--card-alpha-mask': toCssUrl(imageUrl),
+    ...(foilUrl ? { '--foil': toCssUrl(foilUrl) } : {}),
+    ...(maskUrl ? { '--mask': toCssUrl(maskUrl) } : {}),
   };
 }
 
@@ -196,7 +202,10 @@ export function PokemonHoloCardFrame({
   const pendingStyleRef = useRef<InteractionStyle | null>(null);
   const pointerEnabledRef = useRef(false);
   const metadata = useMemo(() => getHoloMetadata(card), [card]);
-  const initialStyle = useMemo(() => getInitialStyle(card, foilUrl, maskUrl), [card, foilUrl, maskUrl]);
+  const initialStyle = useMemo(
+    () => getInitialStyle(card, imageUrl, foilUrl, maskUrl),
+    [card, imageUrl, foilUrl, maskUrl],
+  );
 
   const resetInteraction = () => {
     const element = rootRef.current;

@@ -34,7 +34,7 @@ export type DiscoveryFilters = {
 const typeOptions = ['Fire', 'Water', 'Grass', 'Lightning', 'Psychic', 'Fighting', 'Darkness', 'Metal', 'Dragon', 'Colorless'];
 const rarityOptions = ['Common', 'Uncommon', 'Rare', 'Rare Holo', 'Illustration Rare', 'Special Illustration Rare', 'Ultra Rare', 'Hyper Rare'];
 const supertypeOptions = ['Pokémon', 'Trainer', 'Energy'];
-const FILTER_CONTROL_HEIGHT = '!h-10';
+const FILTER_CONTROL_HEIGHT = 'h-10 min-h-10 data-[size=default]:h-10';
 
 function FilterSelect({
   value,
@@ -55,14 +55,19 @@ function FilterSelect({
   contentClassName?: string;
   valueClassName?: string;
 }) {
+  const labelForValue = (selectedValue: string | null | undefined): string => {
+    if (!selectedValue) return placeholder;
+    if (selectedValue === 'all') return 'All';
+
+    return selectedLabel ?? options.find((option) => option.value === selectedValue)?.label ?? selectedValue;
+  };
+
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className={className}>
-        {selectedLabel ? (
-          <span className={['truncate', valueClassName].filter(Boolean).join(' ')}>{selectedLabel}</span>
-        ) : (
-          <SelectValue placeholder={placeholder} className={['truncate', valueClassName].filter(Boolean).join(' ')} />
-        )}
+        <SelectValue placeholder={placeholder} className={['truncate', valueClassName].filter(Boolean).join(' ')}>
+          {(selectedValue) => labelForValue(selectedValue)}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent className={contentClassName}>
         <SelectGroup>
@@ -238,7 +243,7 @@ export function CardFilters({
             onValueChange={(sort) => onChange({ ...value, sort: sort ?? 'relevance' })}
             placeholder="Sort"
             options={[{ value: 'number', label: 'Number' }, { value: 'relevance', label: 'Relevance' }, { value: 'name', label: 'Name' }, { value: 'set', label: 'Set' }, { value: 'rarity', label: 'Rarity' }]}
-            className="h-10 w-48"
+            className={`${FILTER_CONTROL_HEIGHT} w-48 rounded-xl border-border`}
             contentClassName="min-w-48"
             valueClassName="capitalize"
           />
@@ -246,7 +251,7 @@ export function CardFilters({
             value={String(pageSize)}
             onValueChange={(next) => onPageSizeChange(Number(next))}
           >
-            <SelectTrigger className="h-10 w-28 rounded-xl border-border">
+            <SelectTrigger className={`${FILTER_CONTROL_HEIGHT} w-28 rounded-xl border-border`}>
               <SelectValue placeholder="Results" />
             </SelectTrigger>
             <SelectContent className="min-w-28">
