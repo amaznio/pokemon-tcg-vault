@@ -36,7 +36,7 @@ function CardImagePanel({ card }: { card: CardDetail }) {
           imageUrl={card.imageLarge}
           alt={card.name}
           variant="detail"
-          className="w-full drop-shadow-md"
+          className="w-full"
         />
       ) : (
         <div className="grid min-h-[420px] place-items-center rounded-2xl border border-border bg-muted/20 text-sm text-muted-foreground">

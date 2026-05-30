@@ -3500,10 +3500,30 @@ Shine & Glare Effects
 
 .ptcg-holo-card.is-react .card__front {
   background: transparent;
+  border-radius: 0;
+  overflow: visible;
 }
 
 .ptcg-holo-card.is-react .card__image {
+  border-radius: 0;
+  filter:
+    drop-shadow(0 10px 18px rgb(0 0 0 / 0.28))
+    drop-shadow(0 2px 5px rgb(0 0 0 / 0.18));
   object-fit: contain;
+  overflow: visible;
+}
+
+.ptcg-holo-card.is-react .card__shine,
+.ptcg-holo-card.is-react .card__glare {
+  border-radius: var(--card-radius);
+  overflow: hidden;
+}
+
+.ptcg-holo-card.is-react .card__rotator,
+.ptcg-holo-card.card.is-react.active .card__rotator,
+.ptcg-holo-card.card.is-react .card__rotator:focus,
+.ptcg-holo-card.card.is-react.active .card__rotator:focus {
+  box-shadow: none;
 }
 
 article:focus-visible .ptcg-holo-card.card.is-react {
